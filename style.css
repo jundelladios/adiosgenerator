@@ -1,0 +1,7 @@
+#adminmenumain,
+#wpadminbar,
+#wpfooter { display: none!important; }
+
+#wpcontent {
+  margin-left: 0!important;
+}

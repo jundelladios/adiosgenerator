@@ -1,0 +1,2 @@
+https://ai.elegantthemes.com/api/v1/onboarding/packs
+Authorization: Bearer email:api
