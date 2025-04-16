@@ -5,8 +5,8 @@
  * Plugin URI: https://github.com/jundelladios?tab=repositories
  * Description: Web Generator from AD-IOS Team
  * Version: 1.0.0
- * Author: Jundell
- * Author URI: mailto:jundell@ad-ios.com
+ * Author: AD-IOS Web Development
+ * Author URI: https://ad-ios.com/website-support-ticket/
  * License: GPL-2.0+
  * Text Domain: adiosgenerator
  * Domain Path: /languages
