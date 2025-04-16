@@ -32,4 +32,5 @@ add_action( 'rest_api_init', function () {
       return current_user_can( 'edit_others_posts' );
     }
   ));
+  
 });

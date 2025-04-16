@@ -1,13 +1,13 @@
 <?php
 
 function adiosgenerator_epanel_save( WP_REST_Request $request ) {
+  $_POST = (array) json_decode($request->get_body());
   if(!defined( 'ET_BUILDER_DIR' )) {
     return array(
       'result' => 0
     );
   }
 
-  $_POST = (array) json_decode($request->get_body());
   adiosgenerator_epanel_save_data('js_disabled');
   if( function_exists( 'et_cache_clear' ) ) {
     et_cache_clear();
