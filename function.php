@@ -2,11 +2,11 @@
 
 /**
  * Plugin Name: AD-IOS Web Generator
- * Plugin URI: https://github.com/jundelladios?tab=repositories
+ * Plugin URI: https://github.com/jundelladios/adiosgenerator
  * Description: Web Generator from AD-IOS Team
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: AD-IOS Web Development
- * Author URI: https://ad-ios.com/website-support-ticket/
+ * Author URI: https://ad-ios.com/website-support-ticket
  * License: GPL-2.0+
  * Text Domain: adiosgenerator
  * Domain Path: /languages
