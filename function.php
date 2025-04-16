@@ -12,37 +12,134 @@
  * Domain Path: /languages
  */
 
- add_action( 'rest_api_init', function () {
-  register_rest_route( 'adiosgenerator', 'adiosgenerator_et_theme_builder_api_reset', array(
-    'methods' => 'POST',
-    'callback' => 'adiosgenerator_et_theme_builder_api_reset',
-    'permission_callback' => function() {
-      return current_user_can( 'edit_others_posts' );
-    }
-  ));
-});
-
-function adiosgenerator_et_theme_builder_api_reset() {
-  if(function_exists( 'et_theme_builder_api_reset' )) {
-    $live_id = et_theme_builder_get_theme_builder_post_id( true, false );
-    if ( $live_id > 0 && current_user_can( 'delete_others_posts' ) ) {
-      wp_trash_post( $live_id );
-      // Reset cache when theme builder is reset.
-      ET_Core_PageResource::remove_static_resources( 'all', 'all', true );
-    }
-    et_theme_builder_trash_draft_and_unused_posts();
-    wp_send_json_success();
+function adiosgenerator_api_url() {
+  if( defined('WP_GENERATOR_HOME_URL') ) {
+      return WP_GENERATOR_HOME_URL;
   }
-  wp_send_json_error();
+  return "https://adios-webgenerator.com";
 }
 
-add_action( 'admin_enqueue_scripts', 'adiosgenerator_admin_enqueue_scripts' );
-function adiosgenerator_admin_enqueue_scripts() {
-  $isWPGenerator = isset($_GET['wpgenerator']) ? true : false;
-  if($isWPGenerator) {
-    wp_enqueue_style(
-      'adios-generator-wpadmin',
-      plugins_url( 'style.css', __FILE__ )
-    );
-  }
+function adiosgenerator_get_attachment_by_post_name( $post_name ) {
+	$args = array(
+			'posts_per_page' => 1,
+			'post_type'      => 'attachment',
+			'name'           => trim( $post_name ),
+	);
+
+	$get_attachment = new WP_Query( $args );
+
+	if ( ! $get_attachment || ! isset( $get_attachment->posts, $get_attachment->posts[0] ) ) {
+			return false;
+	}
+
+	return $get_attachment->posts[0];
 }
+
+
+function adiosgenerator_upload_file_by_url( $image_url, $alt=null ) {
+  // it allows us to use download_url() and wp_handle_sideload() functions
+	require_once( ABSPATH . 'wp-admin/includes/file.php' );
+
+	// prevent redownload if filename already exists or uploaded.
+	$fileBaseName = basename( $image_url );
+	$existingAttachment = adiosgenerator_get_attachment_by_post_name( $fileBaseName );
+	if($existingAttachment) {
+		return $existingAttachment->ID;
+	}
+
+	// download to temp dir
+	$temp_file = download_url( $image_url );
+
+	if( is_wp_error( $temp_file ) ) {
+		return false;
+	}
+
+	// move the temp file into the uploads directory
+	$file = array(
+		'name'     => basename( $image_url ),
+		'type'     => mime_content_type( $temp_file ),
+		'tmp_name' => $temp_file,
+		'size'     => filesize( $temp_file ),
+	);
+
+	$sideload = wp_handle_sideload(
+		$file,
+		array(
+			'test_form'   => false // no needs to check 'action' parameter
+		)
+	);
+
+	if( ! empty( $sideload[ 'error' ] ) ) {
+		// you may return error message if you want
+		return false;
+	}
+
+	// it is time to add our uploaded image into WordPress media library
+	$attachment_id = wp_insert_attachment(
+		array(
+			'guid'           => $sideload[ 'url' ],
+			'post_mime_type' => $sideload[ 'type' ],
+			'post_title'     => basename( $sideload[ 'file' ] ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		),
+		$sideload[ 'file' ]
+	);
+
+	if( is_wp_error( $attachment_id ) || ! $attachment_id ) {
+		return false;
+	}
+
+	// update medatata, regenerate image sizes
+	require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+	wp_update_attachment_metadata(
+		$attachment_id,
+		wp_generate_attachment_metadata( $attachment_id, $sideload[ 'file' ] )
+	);
+
+  if($alt) {
+    update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt );
+  }
+
+	return $attachment_id;
+}
+
+
+function adiosgenerator_api_post_exec( $endpoint, $params=array(), $credentials = null ) {
+	$apiParams = array(
+		'headers' => array(
+			'Content-Type' => 'application/json',
+			'Accept' => 'application/json'
+		),
+		'body' => json_encode($params)
+	);
+
+	if(isset( $credentials['user'] ) && isset( $credentials['password'] )) {
+		$apiParams['headers']['Authorization'] = 'Basic ' . base64_encode($credentials['user'] . ':' . $credentials['password']);
+	}
+
+	$request = wp_remote_post( $endpoint, $apiParams);
+	if ( is_wp_error( $request ) ) {
+		return false;
+	}
+
+	$body = wp_remote_retrieve_body( $request );
+  $json = json_decode( $body );
+
+	return $json;
+}
+
+
+define("ADIOSGENERATOR_PLUGIN_URI", plugin_dir_url( __FILE__ ));
+
+define("ADIOSGENERATOR_PLUGIN_DIR", plugin_dir_path( __FILE__ ) );
+
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi.php';
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'rest.php';
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'rest-functions.php';
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'wpcli.php';
