@@ -1,7 +1,7 @@
 <?php
 
 function adiosgenerator_epanel_save( WP_REST_Request $request ) {
-  $_POST = (array) json_decode($request->get_body());
+  $_POST = (array) json_decode($request->get_body(), true);
   if(!defined( 'ET_BUILDER_DIR' )) {
     return array(
       'result' => 0
@@ -94,13 +94,13 @@ function adiosgenerator_signin() {
 
 function adiosgenerator_url_to_attachment( WP_REST_Request $request ) {
 
-  $params = json_decode($request->get_body());
-  $alt = isset( $params->alt ) ? $params->alt : null;
-  if(!isset( $params->image_url )) {
+  $_POST = (array) json_decode($request->get_body(), true);
+  $alt = isset( $_POST['alt'] ) ? $_POST['alt'] : null;
+  if(!isset( $_POST['image_url'] )) {
     return null;
   }
 
   return array(
-    "attachment_id" => adiosgenerator_upload_file_by_url( $params->image_url, $alt )
+    "attachment_id" => adiosgenerator_upload_file_by_url( $_POST['image_url'], $alt )
   );
 }

@@ -135,8 +135,33 @@ define("ADIOSGENERATOR_PLUGIN_URI", plugin_dir_url( __FILE__ ));
 
 define("ADIOSGENERATOR_PLUGIN_DIR", plugin_dir_path( __FILE__ ) );
 
+# allow json file upload
+// add_filter(
+// 	'upload_mimes',
+// 	function( $types ) {
+// 		return array_merge( $types, [ 'json' => 'text/plain' ] );
+// 	}
+// );
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi.php';
+# plugin requires divi
+
+
+# divi files
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi/adiosgenerator_epanel_save_data.php';
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi/adiosgenerator_import_page_template.php';
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . 'rest/adiosgenerator_pages_menu.php';
+
+// require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi/importThemeBuilder.php';
+
+// require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi/importThemeBuilderStep.php';
+
+// require_once ADIOSGENERATOR_PLUGIN_DIR . 'divi/themeBuilderApiSave.php';
+
+# end of divi files
+
 
 require_once ADIOSGENERATOR_PLUGIN_DIR . 'rest.php';
 

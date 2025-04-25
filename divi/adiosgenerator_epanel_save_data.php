@@ -1,6 +1,6 @@
 <?php
 
-if ( ! function_exists( 'adiosgenerator_epanel_save_data' ) ) {
+if ( ! function_exists( 'adiosgenerator_epanel_save_data' ) ):
 
   function adiosgenerator_epanel_save_data( $source ) {
 
@@ -229,7 +229,9 @@ if ( ! function_exists( 'adiosgenerator_epanel_save_data' ) ) {
 
         die('1');
 
-      } else if ( 'reset' === $_POST['action'] ) {
+      } 
+      
+      else if ( 'reset' === $_POST['action'] ) {
 
         foreach ($options as $value) {
           if ( isset($value['id']) ) {
@@ -255,5 +257,4 @@ if ( ! function_exists( 'adiosgenerator_epanel_save_data' ) ) {
       }
     }
   }
-
-}
+endif;

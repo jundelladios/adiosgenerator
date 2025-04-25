@@ -1,6 +1,108 @@
 <?php
 
+use \Divi\Onboarding\Helpers;
+
 if ( class_exists( 'WP_CLI' ) ) {
+  
+  # wp cli for breeze imports
+  function adiosgenerator_wpcli_breeze_import_defaults( $args, $assoc_args ) {
+		if ( empty( $assoc_args ) || ! isset( $assoc_args['file-path'] ) ) {
+			WP_CLI::error(
+				__( 'You need to specify the --file-path=<full_path_to_file> parameter', 'breeze' )
+			);
+
+			return;
+		}
+
+		$file_path = trim( $assoc_args['file-path'] );
+
+		if ( empty( $file_path ) ) {
+			WP_CLI::error(
+				__( 'You need to specify the full url to breeze JSON file', 'breeze' )
+			);
+
+			return;
+		}
+    
+
+		$json = json_decode( file_get_contents( $file_path), true );
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			WP_CLI::error(
+				sprintf(
+				/* translators: %s The JSON had an issue */
+					__( 'There was an error running the action scheduler: %s', 'breeze' ),
+					json_last_error_msg()
+				)
+			);
+
+			return;
+		}
+
+		if (
+			isset( $json['breeze_basic_settings'] ) &&
+			isset( $json['breeze_advanced_settings'] ) &&
+			isset( $json['breeze_cdn_integration'] )
+		) {
+			WP_CLI::success(
+				__( 'The provided JSON is valid...importing data', 'breeze' )
+			);
+
+			$level = '';
+			if ( ! empty( $assoc_args ) && isset( $assoc_args['level'] ) && ! empty( trim( $assoc_args['level'] ) ) ) {
+				if ( 'network' === trim( $assoc_args['level'] ) || is_numeric( $assoc_args['level'] ) ) {
+
+					if ( is_string( $assoc_args['level'] ) && ! is_numeric( $assoc_args['level'] ) ) {
+						$level = trim( $assoc_args['level'] );
+
+					} elseif ( is_numeric( trim( $assoc_args['level'] ) ) ) {
+						$level   = absint( trim( $assoc_args['level'] ) );
+						$is_blog = get_blog_details( $level );
+
+						if ( empty( $is_blog ) ) {
+							WP_CLI::error(
+								__( 'The blog ID is not valid, --level=<blog_id>', 'breeze' )
+							);
+
+							return;
+						}
+					}
+				} else {
+					WP_CLI::error(
+						__( 'Parameter --level=<network|blog_id> does not contain valid data', 'breeze' )
+					);
+				}
+			}
+			if ( ! isset( $json['breeze_file_settings'] ) && ! isset( $json['breeze_preload_settings'] ) ) {
+				$settings_action = Breeze_Settings_Import_Export::replace_options_old_to_new( $json, $level, true );
+			} else {
+				$settings_action = Breeze_Settings_Import_Export::replace_options_cli( $json, $level );
+			}
+
+			if ( true === $settings_action ) {
+				WP_CLI::success(
+					__( 'Settings have been imported', 'breeze' )
+				);
+			} else {
+				WP_CLI::error(
+					__( 'Error improting the settings, check the JSON file', 'breeze' ) . ' : ' . $file_path
+				);
+			}
+		} else {
+			WP_CLI::error(
+				__( 'The JSON file does not contain valid data', 'breeze' ) . ' : ' . $file_path
+			);
+		}
+
+		WP_CLI::line( WP_CLI::colorize( '%YDone%n.' ) );
+
+	}
+
+  WP_CLI::add_command( 'adiosgenerator breeze_import', 'adiosgenerator_wpcli_breeze_import_defaults');
+
+
+
+
+
   # wp cli to generate site application secrets
   function adiosgenerator_wpcli_install( $args ) {
     list( $key, $subscription ) = $args;
@@ -149,102 +251,39 @@ if ( class_exists( 'WP_CLI' ) ) {
     WP_CLI::success( 
       __( 'Divi options and performance has been set', 'adiosgenerator' )  
     );
+
+    $site_info = Helpers\get_site_info();
+    Helpers\update_site_info( 
+      $logoAttachURL, 
+      $applicationData->sitename, 
+      $applicationData->slogan, 
+      $applicationData->insights 
+    );
+
+    WP_CLI::success( 
+      __( 'Site information has been updated.', 'adiosgenerator' )  
+    );
+
+    $diviLayoutDefaults = array(
+      "et_ai_layout_heading_font" => $applicationData->headerFont,
+      "et_ai_layout_body_font" => $applicationData->bodyFont,
+      "et_ai_layout_primary_color" => $applicationData->primaryColor,
+      "et_ai_layout_secondary_color" => $applicationData->secondaryColor,
+      "site_description" => $applicationData->metaDescription
+    );
+
+    foreach ( $diviLayoutDefaults as $key => $option ) {
+			et_update_option( $key, $option );
+		}
+
+    WP_CLI::success( 
+      __( 'Divi Layout Defaults has been saved.', 'adiosgenerator' )  
+    );
+    
+    
+    
+    // WP_CLI::runcommand( 'adiosgenerator breeze_import --file-path=' . adiosgenerator_api_url() . "/json/breeze.json" );
+
   }
   WP_CLI::add_command( 'adiosgenerator install', 'adiosgenerator_wpcli_install');
-
-
-
-  function adiosgenerator_wpcli_breeze_import_defaults( $args, $assoc_args ) {
-		if ( empty( $assoc_args ) || ! isset( $assoc_args['file-path'] ) ) {
-			WP_CLI::error(
-				__( 'You need to specify the --file-path=<full_path_to_file> parameter', 'breeze' )
-			);
-
-			return;
-		}
-
-		$file_path = trim( $assoc_args['file-path'] );
-
-		if ( empty( $file_path ) ) {
-			WP_CLI::error(
-				__( 'You need to specify the full url to breeze JSON file', 'breeze' )
-			);
-
-			return;
-		}
-    
-
-		$json = json_decode( file_get_contents( $file_path), true );
-		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			WP_CLI::error(
-				sprintf(
-				/* translators: %s The JSON had an issue */
-					__( 'There was an error running the action scheduler: %s', 'breeze' ),
-					json_last_error_msg()
-				)
-			);
-
-			return;
-		}
-
-		if (
-			isset( $json['breeze_basic_settings'] ) &&
-			isset( $json['breeze_advanced_settings'] ) &&
-			isset( $json['breeze_cdn_integration'] )
-		) {
-			WP_CLI::success(
-				__( 'The provided JSON is valid...importing data', 'breeze' )
-			);
-
-			$level = '';
-			if ( ! empty( $assoc_args ) && isset( $assoc_args['level'] ) && ! empty( trim( $assoc_args['level'] ) ) ) {
-				if ( 'network' === trim( $assoc_args['level'] ) || is_numeric( $assoc_args['level'] ) ) {
-
-					if ( is_string( $assoc_args['level'] ) && ! is_numeric( $assoc_args['level'] ) ) {
-						$level = trim( $assoc_args['level'] );
-
-					} elseif ( is_numeric( trim( $assoc_args['level'] ) ) ) {
-						$level   = absint( trim( $assoc_args['level'] ) );
-						$is_blog = get_blog_details( $level );
-
-						if ( empty( $is_blog ) ) {
-							WP_CLI::error(
-								__( 'The blog ID is not valid, --level=<blog_id>', 'breeze' )
-							);
-
-							return;
-						}
-					}
-				} else {
-					WP_CLI::error(
-						__( 'Parameter --level=<network|blog_id> does not contain valid data', 'breeze' )
-					);
-				}
-			}
-			if ( ! isset( $json['breeze_file_settings'] ) && ! isset( $json['breeze_preload_settings'] ) ) {
-				$settings_action = Breeze_Settings_Import_Export::replace_options_old_to_new( $json, $level, true );
-			} else {
-				$settings_action = Breeze_Settings_Import_Export::replace_options_cli( $json, $level );
-			}
-
-			if ( true === $settings_action ) {
-				WP_CLI::success(
-					__( 'Settings have been imported', 'breeze' )
-				);
-			} else {
-				WP_CLI::error(
-					__( 'Error improting the settings, check the JSON file', 'breeze' ) . ' : ' . $file_path
-				);
-			}
-		} else {
-			WP_CLI::error(
-				__( 'The JSON file does not contain valid data', 'breeze' ) . ' : ' . $file_path
-			);
-		}
-
-		WP_CLI::line( WP_CLI::colorize( '%YDone%n.' ) );
-
-	}
-
-  WP_CLI::add_command( 'adiosgenerator breeze_import', 'adiosgenerator_wpcli_breeze_import_defaults');
 }
