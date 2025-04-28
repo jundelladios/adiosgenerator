@@ -12,6 +12,17 @@
  * Domain Path: /languages
  */
 
+if( !defined( 'ABSPATH' ) ) : exit(); endif; // No direct access allowed.
+
+// plugin requires DIVI THEME
+if( !defined( 'ET_BUILDER_DIR' ) ) : exit(); endif; // No direct access allowed.
+
+
+define("ADIOSGENERATOR_PLUGIN_URI", trailingslashit( plugin_dir_url( __FILE__ ) ) );
+
+define("ADIOSGENERATOR_PLUGIN_DIR", trailingslashit( plugin_dir_path( '/', __FILE__ ) ) );
+
+
 function adiosgenerator_api_url() {
   if( defined('WP_GENERATOR_HOME_URL') ) {
       return WP_GENERATOR_HOME_URL;
@@ -129,21 +140,6 @@ function adiosgenerator_api_post_exec( $endpoint, $params=array(), $credentials 
 
 	return $json;
 }
-
-
-define("ADIOSGENERATOR_PLUGIN_URI", plugin_dir_url( __FILE__ ));
-
-define("ADIOSGENERATOR_PLUGIN_DIR", plugin_dir_path( __FILE__ ) );
-
-# allow json file upload
-// add_filter(
-// 	'upload_mimes',
-// 	function( $types ) {
-// 		return array_merge( $types, [ 'json' => 'text/plain' ] );
-// 	}
-// );
-
-# plugin requires divi
 
 
 # divi files
