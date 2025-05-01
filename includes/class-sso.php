@@ -85,9 +85,10 @@ class AdiosGenerator_SingleSignOn {
 
   private function redirect( $data ) {
     if( $data && !empty( $this->redirect )) {
-      wp_redirect( $this->redirect );
+      wp_redirect( home_url( $this->redirect ) );
     }
     wp_redirect( admin_url() );
+    die();
   }
 
   /**
