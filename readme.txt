@@ -1,5 +1,4 @@
-=== AD-IOS Digital Marketing Co. (Web Generator) ===
-
+=== AD-IOS Digital Marketing Co - Web Generator ===
 Contributors: gmulti, truchot, wplio
 Tags: webgenerator, portal, dashboard, monitoring
 Requires at least: 5.8
