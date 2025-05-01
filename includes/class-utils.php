@@ -1,0 +1,97 @@
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct script access allowed!' );
+}
+
+class AdiosGenerator_Utilities {
+
+  /**
+   * Get attachment by post name
+   */
+  public static function get_attachment_by_post_name( $post_name ) {
+    $args = array(
+      'posts_per_page' => 1,
+      'post_type'      => 'attachment',
+      'name'           => trim( $post_name ),
+    );
+
+    $get_attachment = new WP_Query( $args );
+    if ( ! $get_attachment || ! isset( $get_attachment->posts, $get_attachment->posts[0] ) ) {
+      return false;
+    }
+
+    return $get_attachment->posts[0];
+  }
+
+
+
+  public static function upload_file_by_url( $image_url, $alt = null ) {
+    // it allows us to use download_url() and wp_handle_sideload() functions
+    require_once( ABSPATH . 'wp-admin/includes/file.php' );
+
+    // prevent redownload if filename already exists or uploaded.
+    $filename = basename( $image_url );
+    $attachment = self::get_attachment_by_post_name( $filename );
+    if($attachment) {
+      return $attachment->ID;
+    }
+
+    // download to temp dir
+    $temp_file = download_url( $image_url );
+
+    if( is_wp_error( $temp_file ) ) {
+      return false;
+    }
+
+    // move the temp file into the uploads directory
+    $file = array(
+      'name'     => basename( $image_url ),
+      'type'     => mime_content_type( $temp_file ),
+      'tmp_name' => $temp_file,
+      'size'     => filesize( $temp_file ),
+    );
+
+    $sideload = wp_handle_sideload(
+      $file,
+      array(
+        'test_form'   => false // no needs to check 'action' parameter
+      )
+    );
+
+    if( ! empty( $sideload[ 'error' ] ) ) {
+      // you may return error message if you want
+      return false;
+    }
+
+    // it is time to add our uploaded image into WordPress media library
+    $attachment_id = wp_insert_attachment(
+      array(
+        'guid'           => $sideload[ 'url' ],
+        'post_mime_type' => $sideload[ 'type' ],
+        'post_title'     => basename( $sideload[ 'file' ] ),
+        'post_content'   => '',
+        'post_status'    => 'inherit',
+      ),
+      $sideload[ 'file' ]
+    );
+
+    if( is_wp_error( $attachment_id ) || ! $attachment_id ) {
+      return false;
+    }
+
+    // update medatata, regenerate image sizes
+    require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+    wp_update_attachment_metadata(
+      $attachment_id,
+      wp_generate_attachment_metadata( $attachment_id, $sideload[ 'file' ] )
+    );
+
+    if($alt) {
+      update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt );
+    }
+
+    return $attachment_id;
+  }
+}
