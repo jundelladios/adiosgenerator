@@ -55,6 +55,7 @@ class AdiosGenerator_Api {
   }
 
   public static function getResponse( $data ) {
+    if(!isset($data->result->data->json)) { return null; }
     try {
       return $data->result->data->json;
     } catch(\Exception $e) {
