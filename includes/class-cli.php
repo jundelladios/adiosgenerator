@@ -26,6 +26,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
   }
 
+
   /**
    * Pulls data and sync presets and content from generator
    */
@@ -43,13 +44,13 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     );
 
     $apidata = AdiosGenerator_Api::getResponse( $data );
-    $retdata = $apidata->client;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
-
-    if(!$retdata) {
+    if(!$apidata) {
       WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
+      return false;
     }
 
+    $retdata = $apidata->client;
+    $divi = (array) json_decode( json_encode($apidata->divi), true );
 
     $logo = AdiosGenerator_Utilities::upload_file_by_url(
       $retdata->logo,
@@ -77,6 +78,46 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     $this->clear();
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
+
+
+
+  /**
+   * Pulls data sync for templates
+   */
+  public function sync_template_data( $args, $assoc_args ) {
+    if( !isset( $assoc_args['token'] ) ) {
+      WP_CLI::error( __( 'You need to specify the --token=<token> parameter', 'adiosgenerator' ) );
+    }
+
+    $token = $assoc_args['token'];
+    $data = AdiosGenerator_Api::run(
+      AdiosGenerator_Api::generatorapi( "/api/trpc/appTokens.appWpTemplateSync" ),
+      array(
+        "token" => $token
+      )
+    );
+
+    $apidata = AdiosGenerator_Api::getResponse( $data );
+    if(!$apidata) {
+      WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
+      return false;
+    }
+
+    $divi = (array) json_decode( json_encode($apidata->divi), true );
+
+    /**
+     * Elegant themes options
+     */
+     if( function_exists( 'et_update_option' ) ) {
+      foreach ( $divi as $key => $option ) {
+        et_update_option( $key, $option );
+      }
+    }
+
+    $this->clear();
+    WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
+  }
+
 }
 
 WP_CLI::add_command(
