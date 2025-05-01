@@ -30,15 +30,14 @@ class AdiosGenerator_SingleSignOn {
     try {
       $data = $this->getData();
       $this->handleSession( $data );
+      $this->redirect( $data );
     } catch(\Exception $e) {
-      // nothing to do
+      /**
+       * ensure to redirect to get out with the token.
+       * force redirect even unauthorized
+       */
+      $this->redirect( $data );
     }
-    
-    /**
-     * ensure to redirect to get out with the token.
-     * force redirect
-     */
-    $this->redirect( $data );
   }
 
   private function handleSession( $data ) {
