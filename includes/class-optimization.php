@@ -150,8 +150,8 @@ class AdiosGenerator_Optimization {
           "All Media - High Priority" => "5",
           "All Media - Low Priority" => "6",
           "Neutral" => "7",
-          "Mobile - Neutral" => "8",
-          "Desktop - Neutral" => "9"
+          "Desktop - Neutral" => "8",
+          "Mobile - Neutral" => "9"
         ),
         "helps" => __( "If set, Make sure this attachment is in the ABOVE THE FOLD content. (High for backgrounds, Low for sliders, Neutral undecided as long this image has been prioritized)", 'adiosgenerator' )
       )
