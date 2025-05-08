@@ -184,7 +184,7 @@ class AdiosGenerator_Optimization {
   }
 
   public function media_settings_save( $post, $attachment ) {
-    $fields = adiosgenerator_get_media_attachment_fields( $post );
+    $fields = $this->attachment_fields();
     foreach( $fields as $field ) {
       $value = isset( $attachment[$field['name']] ) ? $attachment[$field['name']] : "0";
       update_post_meta($post['ID'], $field['name'], $value);
