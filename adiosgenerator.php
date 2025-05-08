@@ -3,9 +3,9 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Web Generator from AD-IOS Team
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: AD-IOS Web Development
- * Author URI: https://ad-ios.com/website-support-ticket
+ * Author URI: https://github.com/jundelladios/adiosgenerator
  * License: GPL-2.0+
  * Text Domain: adiosgenerator
  * Domain Path: /languages
@@ -27,8 +27,12 @@ if( file_exists( ABSPATH . 'wp-adiosgenerator-config.php' ) ) {
 
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-utils.php";
 
+require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-process-content.php";
+
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-api.php";
 
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-cli.php";
 
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-sso.php";
+
+require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-optimization.php";

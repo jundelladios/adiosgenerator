@@ -49,6 +49,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       return false;
     }
 
+    AdiosGenerator_Utilities::disable_post_revision();
+
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
@@ -98,11 +100,13 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     );
 
     $apidata = AdiosGenerator_Api::getResponse( $data );
+    
     if(!$apidata) {
       WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
       return false;
     }
 
+    AdiosGenerator_Utilities::disable_post_revision();
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
     /**

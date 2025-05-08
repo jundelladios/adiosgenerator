@@ -94,4 +94,10 @@ class AdiosGenerator_Utilities {
 
     return $attachment_id;
   }
+
+
+  public static function disable_post_revision() {
+    // removing auto post revision
+    add_filter( 'wp_revisions_to_keep', '__return_zero' );
+  }
 }
