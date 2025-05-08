@@ -13,8 +13,9 @@ class AdiosGenerator_Optimization {
   public function init() {
     add_action( 'wp_enqueue_scripts', array( $this, "remove_unecessary_styles" ), 100 );
     remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
+    
     add_action( 'wp_head', array( $this, "divi_palletes_css_variables" ), 999 );
-    add_action( 'wp_footer', array( $this, "divi_lazy_background" ), 999 );
+    add_action( 'wp_footer', array( $this, "divi_lazy_images" ), 999 );
 
     // attachment optimization settings
     add_filter( 'attachment_fields_to_edit',  array( $this, "media_settings" ), 10, 2 );
@@ -35,6 +36,14 @@ class AdiosGenerator_Optimization {
     wp_dequeue_style( 'wp-block-library' );
     wp_dequeue_style( 'wp-block-library-theme' );
     wp_dequeue_style( 'wc-blocks-style' );
+  }
+
+  /**
+   * check if optimization is enabled
+   */
+  public function is_optimize() {
+    include_once(ABSPATH . 'wp-includes/pluggable.php');
+    return ( is_user_logged_in() && isset( $_GET['et_fb'] ) ) || current_user_can( 'edit_posts' ) ? false : true;
   }
 
   /**
@@ -70,6 +79,8 @@ class AdiosGenerator_Optimization {
     /**
      * css for lazy backgrounds
      */
+
+    if( $this->is_optimize()):
     $custom_css .= "
     .et_pb_slider:not(.no-lazyload, .entered) .et_pb_slide,
     .et_pb_slider .et_pb_slide:not(.et-pb-active-slide), 
@@ -81,6 +92,8 @@ class AdiosGenerator_Optimization {
     ";
     $custom_css .= "background-image: unset!important;";
     $custom_css .= "}";
+    endif;
+
 
     $custom_css .= "</style>";
     echo $custom_css;
@@ -89,8 +102,10 @@ class AdiosGenerator_Optimization {
   /**
    * breeze divi lazybackground and images scripts
    */
-  public function divi_lazy_background() {
+  public function divi_lazy_images() {
     $custom_js = "<script type=\"text/javascript\" id=\"wp-generator-custom-js-optimization\">";
+
+    if( $this->is_optimize()):
     $custom_js .= '
     const AdiosGeneratorLazyLoadDiviBackgroundInstance = new LazyLoad({
         elements_selector: ".et_pb_slider, .et_pb_with_background",
@@ -106,6 +121,8 @@ class AdiosGenerator_Optimization {
         threshold: 300
     });
     ';
+    endif;
+
     $custom_js .= "</script>";
     echo $custom_js;
   }

@@ -3,7 +3,7 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Web Generator from AD-IOS Team
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: AD-IOS Web Development
  * Author URI: https://github.com/jundelladios/adiosgenerator
  * License: GPL-2.0+
