@@ -35,4 +35,6 @@ require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-cli.php";
 
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-sso.php";
 
+require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/supports/class-gravityforms.php";
+
 require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-optimization.php";

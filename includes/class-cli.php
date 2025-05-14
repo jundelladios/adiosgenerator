@@ -67,6 +67,18 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     );
     update_option( 'site_icon', $favicon );
 
+
+    /**
+     * Store Previews Theme Accent Colors
+     */
+    if( function_exists( 'et_get_option' )) {
+      update_option( 'et_adiosgenerator_options', array(
+        'accent_color' => et_get_option( 'accent_color', $divi["accent_color"] ),
+        'secondary_accent_color' => et_get_option( 'secondary_accent_color', $divi["secondary_accent_color"] )
+      ) );
+    }
+
+
     /**
      * Elegant themes options
      */
