@@ -38,15 +38,7 @@ class AdiosGenerator_Process_Content {
     //   'secondary_accent_color' => "#222222"
     // ) );
 
-    // $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWJzY3JpcHRpb25faWQiOiJzdWJfMVJLMkg1RUttWTd1ekZucEJCTHlsZXZqIiwiaWF0IjoxNzQ3MTc1NTEzLCJleHAiOjE3NDcyNjE5MTN9.R3paUYP5FoS7m9vdzrIb4hJOIPoNBNi2JiRQiI4vDV4";
-    // $data = AdiosGenerator_Api::run(
-    //   AdiosGenerator_Api::generatorapi( "/api/trpc/appTokens.appWpSync" ),
-    //   array(
-    //     "token" => $token
-    //   )
-    // );
-    // $apidata = AdiosGenerator_Api::getResponse( $data );
-    // $retdata = $apidata->client;
+    
 
 
     // $posts_types = array(
