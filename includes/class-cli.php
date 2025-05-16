@@ -109,7 +109,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
 
-  public function appWpTokenGet( $assoc_args, $endpoint="appWpSync" ) {
+  private function appWpTokenGet( $assoc_args, $endpoint="appWpSync" ) {
     if( !isset( $assoc_args['token'] ) ) {
       WP_CLI::error( __( 'You need to specify the --token=<token> parameter', 'adiosgenerator' ) );
       return false;

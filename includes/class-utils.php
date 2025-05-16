@@ -100,4 +100,25 @@ class AdiosGenerator_Utilities {
     // removing auto post revision
     add_filter( 'wp_revisions_to_keep', '__return_zero' );
   }
+
+  public static function et_adiosgenerator_option( $option ) {
+    return "et_adiosgenerator_option_{$option}";
+  }
+
+  public static function hexToRgba($hex, $alpha=1) {
+    $hex = str_replace('#', '', $hex);
+    if (strlen($hex) == 3) {
+        $r = hexdec(str_repeat(substr($hex, 0, 1), 2));
+        $g = hexdec(str_repeat(substr($hex, 1, 1), 2));
+        $b = hexdec(str_repeat(substr($hex, 2, 1), 2));
+    } else if (strlen($hex) == 6) {
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+    } else {
+        // Invalid hex color
+        return false;
+    }
+    return [$r, $g, $b, $alpha];
+  }
 }
