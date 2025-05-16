@@ -161,8 +161,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       if( function_exists( 'et_update_option') ) {
         et_update_option( "divi_logo", wp_get_attachment_url( $logo ) );
       }
+      // disable lazyload
       update_post_meta( $logo, "adiosgenerator_disable_lazyload", 1 );
-      update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
       WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
     } else {
       WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
@@ -247,6 +247,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
+    $placeholder = $apidata->placeholder;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
     $posts = get_posts(array(
@@ -262,10 +263,63 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         "et_theme_builder"
       )
     ));
-    // (new AdiosGenerator_Process_Content)->processData( );
 
-    // error_log( json_encode( $retdata)  );
-    // return $apidata;
+    $prevColors = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "colors" ), array(
+      'accent_color' => et_get_option( 'accent_color', $divi["accent_color"] ),
+      'secondary_accent_color' => et_get_option( 'secondary_accent_color', $divi["secondary_accent_color"] )
+    ));
+
+
+    $logo = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "logo" ) );
+    $logo2 = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "logo_2" ) );
+    $smFields = (new ET_Builder_Module_Social_Media_Follow_Item)->get_fields();
+
+    foreach( $posts as $pst ) {
+      $content = $pst->post_content;
+      // accents replace
+      $content = preg_replace('/' . preg_quote($prevColors["accent_color"], '/') . '/i', $divi["accent_color"], $content);
+      $content = preg_replace('/' . preg_quote($prevColors["secondary_accent_color"], '/') . '/i', $divi["secondary_accent_color"], $content);
+      // logos replace
+      $content = preg_replace('#https?://[^\s\'"]*/site-logo\.[a-zA-Z0-9]+#', wp_get_attachment_url( $logo ), $content);
+      $content = preg_replace('#https?://[^\s\'"]*/site-logo-footer\.[a-zA-Z0-9]+#', wp_get_attachment_url( $logo2 ), $content);
+      // contact number replace
+      $content = str_replace($placeholder->contact_number, $retdata->contact_number, $content);
+      $content = str_replace(
+        preg_replace('/\D+/', '', $placeholder->contact_number),
+        preg_replace('/\D+/', '', $retdata->contact_number),
+        $content
+      );
+      // email replace
+      $content = str_replace($placeholder->email_address, $retdata->email_address, $content);
+      // maps and address replace
+      $content = str_replace( $placeholder->site_address, $retdata->site_address, $content);
+      $content = (new AdiosGenerator_Process_Content)->replace_google_maps_iframe_address( $content, $retdata->site_address );
+      // social media replace
+      $content = preg_replace_callback(
+      '/\[et_pb_social_media_follow([^\]]*)\](.*?)\[\/et_pb_social_media_follow\]/s',
+        function ($matches) use($retdata, $smFields) {
+            $attributes = $matches[1]; // Keeps the original attributes
+            $socMediaContent = "";
+            foreach( $retdata->social_media as $socmed ) {
+              $socMediaColor = isset( $smFields['social_network']['value_overwrite'][$socmed->social] ) ? $smFields['social_network']['value_overwrite'][$socmed->social] : $divi["accent_color"];
+              $socMediaContent .= "[et_pb_social_media_follow_network {$attributes} social_network=\"{$socmed->social}\" url=\"{$socmed->link}\" background_color=\"{$socMediaColor}\"]{$socmed->social}[/et_pb_social_media_follow_network]";
+            }
+            return "[et_pb_social_media_follow{$attributes}]{$socMediaContent}[/et_pb_social_media_follow]";
+        },
+        $content
+      );
+
+      wp_update_post([
+        'ID' => $pst->ID,
+        'post_content' => $content
+      ]);
+      
+      ET_Core_PageResource::remove_static_resources( $pst->ID, 'all', true );
+    }
+    
+    do_action( "adiosgenerator_clear_cache" );
+
+    WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
   }
 }
 

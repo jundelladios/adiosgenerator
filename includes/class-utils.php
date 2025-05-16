@@ -26,13 +26,16 @@ class AdiosGenerator_Utilities {
 
 
 
-  public static function upload_file_by_url( $image_url, $alt = null ) {
+  public static function upload_file_by_url( $image_url, $alt = null, $fname=null ) {
     // it allows us to use download_url() and wp_handle_sideload() functions
     require_once( ABSPATH . 'wp-admin/includes/file.php' );
 
+    $extension = pathinfo($image_url, PATHINFO_EXTENSION);
+    $fname = $fname ? sanitize_title( $fname ) . ".{$extension}" : null;
+
     // prevent redownload if filename already exists or uploaded.
     $filename = basename( $image_url );
-    $attachment = self::get_attachment_by_post_name( $filename );
+    $attachment = self::get_attachment_by_post_name( $fname ? $fname : $filename );
     if($attachment) {
       return $attachment->ID;
     }
@@ -46,7 +49,7 @@ class AdiosGenerator_Utilities {
 
     // move the temp file into the uploads directory
     $file = array(
-      'name'     => basename( $image_url ),
+      'name'     => $fname ? $fname : basename( $image_url ),
       'type'     => mime_content_type( $temp_file ),
       'tmp_name' => $temp_file,
       'size'     => filesize( $temp_file ),
