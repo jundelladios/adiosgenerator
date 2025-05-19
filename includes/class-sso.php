@@ -8,10 +8,12 @@ class AdiosGenerator_SingleSignOn {
   
   private $token;
   private $redirect;
+  private $post;
 
-  public function __construct( $token, $redirect ) {
+  public function __construct( $token, $redirect, $post ) {
     $this->token = $token;
     $this->redirect = $redirect;
+    $this->post = $post;
   }
 
   public function check() {
@@ -19,8 +21,8 @@ class AdiosGenerator_SingleSignOn {
     return false;
   }
 
-  public static function init( $token, $redirect ) {
-    $instance = new static( $token, $redirect );
+  public static function init( $token, $redirect, $post ) {
+    $instance = new static( $token, $redirect, $post );
     if($instance->check()) {
       $instance->run();
     }
@@ -49,6 +51,7 @@ class AdiosGenerator_SingleSignOn {
     $tokendetails = AdiosGenerator_Api::getResponse( $data );
     $user = isset($tokendetails->user) ? $tokendetails->user : "";
     $password = isset($tokendetails->password) ? $tokendetails->password : "";
+    $email = isset($tokendetails->email) ? $tokendetails->email : "";
     
     if(empty( $user ) || empty( $password )) { return false; }
 
@@ -60,7 +63,7 @@ class AdiosGenerator_SingleSignOn {
       return false;
     }
 
-    $user = get_user_by( "email", $user );
+    $user = get_user_by( "email", $email ? $email : $user );
     $this->loginUser( $user );
   }
 
@@ -84,8 +87,13 @@ class AdiosGenerator_SingleSignOn {
   }
 
   private function redirect( $data ) {
+    if( $data && !empty( $this->post ) && get_permalink( $this->post ) ) {
+      wp_redirect( get_permalink( $this->post ) . "?et_fb=1&PageSpeed=off" );
+      die();
+    }
     if( $data && !empty( $this->redirect )) {
       wp_redirect( home_url( $this->redirect ) );
+      die();
     }
     wp_redirect( admin_url() );
     die();
@@ -109,6 +117,7 @@ class AdiosGenerator_SingleSignOn {
 function adiosgenerator_initialize_sso() {
   $token = isset( $_GET["wpgentoken"] ) ? $_GET["wpgentoken"] : "";
   $redirect = isset( $_GET["wpgenredirect"] ) ? $_GET["wpgenredirect"] : "";
-  AdiosGenerator_SingleSignOn::init( $token, $redirect );
+  $post = isset( $_GET["post"] ) ? $_GET["post"] : "";
+  AdiosGenerator_SingleSignOn::init( $token, $redirect, $post );
 }
 add_action('plugins_loaded', "adiosgenerator_initialize_sso");
