@@ -314,9 +314,9 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         'post_content' => $content
       ]);
       
-      ET_Core_PageResource::remove_static_resources( $pst->ID, 'all', true );
     }
     
+    ET_Core_PageResource::remove_static_resources( 'all', 'all' );
     do_action( "adiosgenerator_clear_cache" );
 
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );

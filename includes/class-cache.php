@@ -23,7 +23,7 @@ class AdiosGenerator_Cache {
 
   public static function clear_cache() {
     if(class_exists("ET_Core_PageResource")) {
-      ET_Core_PageResource::remove_static_resources( 'all', 'all', true );
+      ET_Core_PageResource::remove_static_resources( 'all', 'all' );
     }
     wp_cache_flush();
     do_action( 'breeze_clear_all_cache' );
