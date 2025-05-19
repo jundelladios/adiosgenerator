@@ -301,8 +301,10 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
             $attributes = $matches[1]; // Keeps the original attributes
             $socMediaContent = "";
             foreach( $retdata->social_media as $socmed ) {
-              $socMediaColor = isset( $smFields['social_network']['value_overwrite'][$socmed->social] ) ? $smFields['social_network']['value_overwrite'][$socmed->social] : $divi["accent_color"];
-              $socMediaContent .= "[et_pb_social_media_follow_network {$attributes} social_network=\"{$socmed->social}\" url=\"{$socmed->link}\" background_color=\"{$socMediaColor}\"]{$socmed->social}[/et_pb_social_media_follow_network]";
+              if( isset( $smFields['social_network']['value_overwrite'][$socmed->social] ) ) {
+                $socMediaColor = $smFields['social_network']['value_overwrite'][$socmed->social];
+                $socMediaContent .= "[et_pb_social_media_follow_network {$attributes} social_network=\"{$socmed->social}\" url=\"{$socmed->link}\" background_color=\"{$socMediaColor}\"]{$socmed->social}[/et_pb_social_media_follow_network]";
+              }
             }
             return "[et_pb_social_media_follow{$attributes}]{$socMediaContent}[/et_pb_social_media_follow]";
         },
