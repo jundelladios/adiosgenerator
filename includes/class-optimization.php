@@ -196,15 +196,12 @@ class AdiosGenerator_Optimization {
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->process_lazyload_medias( $buffer );
-    if ( class_exists( 'Breeze_Options_Reader') && ! empty( Breeze_Options_Reader::get_option_value( 'cdn-active' ) ) ) {
-      // Get buffer after remove query strings
-      $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
-    }
+    $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
     return $buffer;
   }
 
   public function process_preload_medias( $content ) {
-
+    
     /**
      * Image Preload Handle, priority load images.
      */
@@ -239,7 +236,8 @@ class AdiosGenerator_Optimization {
         $priority .= "media=\"(max-width: 768px)\"";
       }
 
-      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$prel->guid}\" type=\"{$mime}\" {$priority}> ";
+      $href = $this->cdn_url( $prel->guid );
+      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority}> ";
     }
 
     /**
@@ -248,6 +246,17 @@ class AdiosGenerator_Optimization {
     $content = str_replace( "</head>", $preload_lists . "</head>", $content );
 
     return $content;
+  }
+
+
+  public function cdn_url( $url ) {
+    if ( class_exists( 'Breeze_Options_Reader' ) && !empty( Breeze_Options_Reader::get_option_value( 'cdn-active' )) && !empty( Breeze_Options_Reader::get_option_value( 'cdn-url' ) ) ) {
+      $site_url = get_site_url();
+      $cdn_url = Breeze_Options_Reader::get_option_value( 'cdn-url' );
+      return str_replace($site_url . '/wp-content/', $cdn_url . '/wp-content/', $url);
+    }
+
+    return $url;
   }
 
 
@@ -268,7 +277,8 @@ class AdiosGenerator_Optimization {
 
     $srcs = array();
     foreach( $excludes as $exl ) {
-      $srcs[] = $exl->guid;
+      $excludeURL = $this->cdn_url($exl->guid);
+      $srcs[] = $this->cdn_url($exl->guid);
     }
 
     /**
@@ -288,7 +298,6 @@ class AdiosGenerator_Optimization {
         // Get the image URL
         preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $img_match, $src_value );
         $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
-
         if( true === in_array( $current_src, $srcs ) ) {
           // if image src has been set to exclude lazy auto add attribute
           $img_match_new = preg_replace( '/<img\s/i', '<img loading="eager" ', $img_match, 1 );

@@ -161,8 +161,9 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       if( function_exists( 'et_update_option') ) {
         et_update_option( "divi_logo", wp_get_attachment_url( $logo ) );
       }
-      // disable lazyload
+      // disable lazyload and lcp high prio
       update_post_meta( $logo, "adiosgenerator_disable_lazyload", 1 );
+      update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
       WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
     } else {
       WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
@@ -230,8 +231,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       sanitize_title( $retdata->site_name . "-favicon" ),
       sanitize_title( $retdata->site_name . "-favicon" )
     );
-
-    error_log( $placeholdFavicon );
     
     if( $favicon ) {
       update_option( 'site_icon', $favicon );
