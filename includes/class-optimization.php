@@ -196,6 +196,10 @@ class AdiosGenerator_Optimization {
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->process_lazyload_medias( $buffer );
+    if ( class_exists( 'Breeze_Options_Reader') && ! empty( Breeze_Options_Reader::get_option_value( 'cdn-active' ) ) ) {
+      // Get buffer after remove query strings
+      $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
+    }
     return $buffer;
   }
 
@@ -242,11 +246,6 @@ class AdiosGenerator_Optimization {
      * insert priorities in head tag
      */
     $content = str_replace( "</head>", $preload_lists . "</head>", $content );
-
-    if ( class_exists( 'Breeze_Options_Reader') && ! empty( Breeze_Options_Reader::get_option_value( 'cdn-active' ) ) ) {
-      // Get buffer after remove query strings
-      $content = apply_filters( 'breeze_cdn_content_return', $content );
-    }
 
     return $content;
   }
