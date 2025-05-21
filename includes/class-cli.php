@@ -82,6 +82,16 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       $wpdb->options,
       array('option_name' => 'new_admin_email')
     );
+
+    /**
+     * Breeze CDN
+     */
+    if( function_exists( 'breeze_get_option') && isset( $apidata->cdn )) {
+      $cdn = breeze_get_option( 'cdn_integration' );
+      $cdn['cdn-url'] = "https://" . $apidata->cdn;
+      $cdn['cdn-active'] = 1;
+      breeze_update_option( 'cdn_integration', $cdn, true );
+    }
     
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
@@ -94,7 +104,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
   public function sync_template_data( $args, $assoc_args ) {
     $apidata = $this->appWpTokenGet( $assoc_args, "appWpTemplateSync" );
     if( !$apidata ) return;
-
+    $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
     /**
@@ -105,6 +115,17 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         et_update_option( $key, $option );
       }
     }
+
+    /**
+     * Breeze CDN
+     */
+    if( function_exists( 'breeze_get_option') && isset( $apidata->cdn )) {
+      $cdn = breeze_get_option( 'cdn_integration' );
+      $cdn['cdn-url'] = $apidata->cdn;
+      $cdn['cdn-active'] = 1;
+      breeze_update_option( 'cdn_integration', $cdn, true );
+    }
+
 
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
