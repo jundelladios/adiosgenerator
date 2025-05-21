@@ -88,7 +88,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
      */
     if( function_exists( 'breeze_get_option') && isset( $apidata->cdn )) {
       $cdn = breeze_get_option( 'cdn_integration' );
-      $cdn['cdn-url'] = "https://" . $apidata->cdn;
+      $cdn['cdn-url'] = $apidata->cdn;
       $cdn['cdn-active'] = 1;
       breeze_update_option( 'cdn_integration', $cdn, true );
     }
