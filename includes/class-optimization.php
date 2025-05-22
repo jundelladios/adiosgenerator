@@ -356,6 +356,46 @@ class AdiosGenerator_Optimization {
      * End of image processing
      */
 
+
+     /**
+      * iframe processing
+      */
+    preg_match_all( '/<iframe[^>]+>/i', $content, $iframe_matches );
+    if ( ! empty( $iframe_matches[0] ) ) {
+      foreach ( $iframe_matches[0] as $iframe_match ) {
+        if(!preg_match('/\bloading\s*=\s*["\']eager["\']/i', $iframe_match)) {
+          preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $iframe_match, $src_value );
+          $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
+          // Add lazy-load data attribute.
+          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1data-breeze="' . trim( $current_src ) . '" ', $iframe_match );
+          // Remove the current image source.
+          $iframe_match_new = preg_replace( '/(<iframe.+)(src=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $iframe_match_new );
+          // Add placeholder image as source
+          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" ', $iframe_match_new );
+          
+          // Fetch the current image CSS classes.
+          preg_match( '/class=(?:"|\')(.+?)(?:"|\')/', $iframe_match_new, $class_value );
+          $current_classes = ! empty( $class_value[1] ) ? $class_value[1] : '';
+
+          // Append breeze lazy-load CSS class.
+          if ( empty( trim( $current_classes ) ) ) {
+            $current_classes = 'br-lazy';
+          } else {
+            $current_classes .= ' br-lazy';
+          }
+
+          $iframe_match_new = preg_replace( '/(<iframe.+)(class=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $iframe_match_new );
+          // Add lazy-load CSS class.
+          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1class="' . $current_classes . '" ', $iframe_match_new );
+
+          $content = str_replace( $iframe_match, $iframe_match_new, $content );
+        }
+      }
+    }
+    /**
+     * end of iframe processing
+     */
+
     return $content;
   }
 
