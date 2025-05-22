@@ -22,6 +22,19 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
   }
 
+  private function cdn_set( $cdnurl ) {
+    /**
+     * Breeze CDN
+     */
+    if( function_exists( 'breeze_get_option')) {
+      $cdn = breeze_get_option( 'cdn_integration' );
+      $cdn['cdn-url'] = $cdnurl;
+      $cdn['cdn-active'] = 1;
+      breeze_update_option( 'cdn_integration', $cdn, true );
+      WP_CLI::success( __( 'CDN has been set!', 'adiosgenerator' ) );
+    }
+  }
+
 
   /**
    * Pulls data and sync presets and content from generator
@@ -86,12 +99,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     /**
      * Breeze CDN
      */
-    if( function_exists( 'breeze_get_option') && isset( $apidata->cdn )) {
-      $cdn = breeze_get_option( 'cdn_integration' );
-      $cdn['cdn-url'] = $apidata->cdn;
-      $cdn['cdn-active'] = 1;
-      breeze_update_option( 'cdn_integration', $cdn, true );
-    }
+    $this->cdn_set( $apidata->cdn );
     
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
@@ -119,13 +127,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     /**
      * Breeze CDN
      */
-    if( function_exists( 'breeze_get_option') && isset( $apidata->cdn )) {
-      $cdn = breeze_get_option( 'cdn_integration' );
-      $cdn['cdn-url'] = $apidata->cdn;
-      $cdn['cdn-active'] = 1;
-      breeze_update_option( 'cdn_integration', $cdn, true );
-    }
-
+    $this->cdn_set( $apidata->cdn );
 
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
@@ -135,16 +137,11 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       WP_CLI::error( __( 'You need to specify the --cdn=<cdn> parameter', 'adiosgenerator' ) );
       return false;
     }
+
     /**
      * Breeze CDN
      */
-    if( function_exists( 'breeze_get_option') ) {
-      $cdn = breeze_get_option( 'cdn_integration' );
-      $cdn['cdn-url'] = $assoc_args['cdn'];
-      $cdn['cdn-active'] = 1;
-      breeze_update_option( 'cdn_integration', $cdn, true );
-      WP_CLI::success( __( 'CDN has been set!', 'adiosgenerator' ) );
-    }
+    $this->cdn_set( $assoc_args['cdn'] );
     $this->clear();
   }
 
