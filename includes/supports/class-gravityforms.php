@@ -18,7 +18,7 @@ class AdiosGenerator_Supports_GravityForms {
   public function divi_css_class_button( $button, $form ) {
     $fragment = WP_HTML_Processor::create_fragment( $button );
     $fragment->next_token();
-    $fragment->add_class( 'et_pb_button' );
+    $fragment->add_class( 'et_pb_button et_pb_gform_button' );
     return $fragment->get_updated_html();
   }
 

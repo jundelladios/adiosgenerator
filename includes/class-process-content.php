@@ -18,10 +18,6 @@ class AdiosGenerator_Process_Content {
     );
   }
 
-  public function processApi( WP_REST_Request $request ) {
-    return true;
-  }
-
   public function get_social_items() {
     if( class_exists( 'ET_Builder_Module_Social_Media_Follow_Item' )) {
       return wp_send_json_success((new ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
@@ -31,13 +27,6 @@ class AdiosGenerator_Process_Content {
 
   public function routes() {
     add_action( "rest_api_init", function() {
-      register_rest_route( 'adiosgenerator', 'process-content', array(
-        'methods' => 'POST',
-        'callback' => array( $this, "processApi" ),
-        'permission_callback' => function() {
-          return "__false";
-        }
-      ));
 
       register_rest_route( 'adiosgenerator', 'social-lists', array(
         'methods' => 'GET',

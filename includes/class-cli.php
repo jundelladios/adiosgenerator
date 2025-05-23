@@ -311,12 +311,15 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
 
     foreach( $posts as $pst ) {
       $content = $pst->post_content;
+
       // accents replace
       $content = preg_replace('/' . preg_quote($prevColors["accent_color"], '/') . '/i', $divi["accent_color"], $content);
       $content = preg_replace('/' . preg_quote($prevColors["secondary_accent_color"], '/') . '/i', $divi["secondary_accent_color"], $content);
+
       // logos replace
       $content = preg_replace('#https?://[^\s\'"]*/site-logo\.[a-zA-Z0-9]+#', wp_get_attachment_url( $logo ), $content);
-      $content = preg_replace('#https?://[^\s\'"]*/site-logo-footer\.[a-zA-Z0-9]+#', wp_get_attachment_url( $logo2 ), $content);
+      $content = preg_replace('#https?://[^\s\'"]*/site-logo-secondary\.[a-zA-Z0-9]+#', wp_get_attachment_url( $logo2 ), $content);
+
       // contact number replace
       $content = str_replace($placeholder->contact_number, $retdata->contact_number, $content);
       $content = str_replace(
@@ -324,11 +327,19 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         preg_replace('/\D+/', '', $retdata->contact_number),
         $content
       );
+
       // email replace
       $content = str_replace($placeholder->email_address, $retdata->email_address, $content);
+
       // maps and address replace
       $content = str_replace( $placeholder->site_address, $retdata->site_address, $content);
       $content = (new AdiosGenerator_Process_Content)->replace_google_maps_iframe_address( $content, $retdata->site_address );
+      $content = str_replace( 
+        str_replace( " ", "+", $placeholder->site_address ), 
+        str_replace( " ", "+", $retdata->site_address ),
+        $content
+      );
+
       // social media replace
       $content = preg_replace_callback(
       '/\[et_pb_social_media_follow([^\]]*)\](.*?)\[\/et_pb_social_media_follow\]/s',
@@ -345,6 +356,19 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         },
         $content
       );
+
+      // insights replace
+      $content = str_replace( $placeholder->about_content, $retdata->insights, $content );
+
+      // social links replace
+      // foreach( $retdata->social_media as $socmed ) {
+      //   $social_pattern = 'https:\/\/(?:[a-z0-9\-]+\.)?(' . preg_quote( $socmed->social, '/' ) . '(?:[\-\d]+)?)\.com\/' . preg_quote( $placeholder->social_slug ) . '\b/i';
+      //   $content = preg_replace($social_pattern, $socmed->link, $content );
+      // }
+
+      // social and site name
+      $content = str_replace( $placeholder->site_name, $retdata->site_name, $content );
+      $content = str_replace( $placeholder->tagline, $retdata->slogan, $content );
 
       wp_update_post([
         'ID' => $pst->ID,
