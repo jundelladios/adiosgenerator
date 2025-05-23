@@ -18,7 +18,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
    * Clear Divi static resources and all caches
    */
   public function clear() {
-    do_action( "adiosgenerator_clear_cache" );
+    AdiosGenerator_Cache::clear_cache();
     WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
   }
 
@@ -353,9 +353,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       
     }
     
-    ET_Core_PageResource::remove_static_resources( 'all', 'all' );
-    do_action( "adiosgenerator_clear_cache" );
-
+    $this->clear();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
   }
 }
