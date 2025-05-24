@@ -22,20 +22,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
   }
 
-  private function cdn_set( $cdnurl ) {
-    /**
-     * Breeze CDN
-     */
-    if( function_exists( 'breeze_get_option')) {
-      $cdn = breeze_get_option( 'cdn_integration' );
-      $cdn['cdn-url'] = $cdnurl;
-      $cdn['cdn-active'] = 1;
-      breeze_update_option( 'cdn_integration', $cdn, true );
-      WP_CLI::success( __( 'CDN has been set!', 'adiosgenerator' ) );
-    }
-  }
-
-
   /**
    * Pulls data and sync presets and content from generator
    */
@@ -95,11 +81,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       $wpdb->options,
       array('option_name' => 'new_admin_email')
     );
-
-    /**
-     * Breeze CDN
-     */
-    $this->cdn_set( $apidata->cdn );
     
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
@@ -124,25 +105,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       }
     }
 
-    /**
-     * Breeze CDN
-     */
-    $this->cdn_set( $apidata->cdn );
-
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
-  }
-
-  public function apply_cdn( $args, $assoc_args ) {
-    if( !isset( $assoc_args['cdn'] ) ) {
-      WP_CLI::error( __( 'You need to specify the --cdn=<cdn> parameter', 'adiosgenerator' ) );
-      return false;
-    }
-
-    /**
-     * Breeze CDN
-     */
-    $this->cdn_set( $assoc_args['cdn'] );
-    $this->clear();
   }
 
   private function appWpTokenGet( $assoc_args, $endpoint="appWpSync" ) {
