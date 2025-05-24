@@ -360,13 +360,23 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       // insights replace
       $content = str_replace( $placeholder->about_content, $retdata->insights, $content );
 
-      // social links replace
-      // foreach( $retdata->social_media as $socmed ) {
-      //   $social_pattern = 'https:\/\/(?:[a-z0-9\-]+\.)?(' . preg_quote( $socmed->social, '/' ) . '(?:[\-\d]+)?)\.com\/' . preg_quote( $placeholder->social_slug ) . '\b/i';
-      //   $content = preg_replace($social_pattern, $socmed->link, $content );
-      // }
+      // socials replace
+      $socialPages = array();
+      foreach( $retdata->social_media as $socmed ) {
+        $socialPages[$socmed->social] = $socmed->link;
+        if( $socmed->social === "twitter" ) {
+          $socialPages["x"] = $socmed->link;
+        }
+      }
 
-      // social and site name
+      $social_platforms = implode('|', array_keys($socialPages));
+      $social_pattern = '/https:\/\/[a-z0-9\-\.]*(' . $social_platforms . ')[a-z0-9\-\.]*\.com\/' . preg_quote( $placeholder->social_slug, '/' ) . '/i';
+      
+      $content = preg_replace_callback($social_pattern, function ($matches) use ($socialPages) {
+        return $socialPages[$matches[1]] ?? $matches[0]; // Fallback if not found
+      }, $content);
+
+      // site name and slogan
       $content = str_replace( $placeholder->site_name, $retdata->site_name, $content );
       $content = str_replace( $placeholder->tagline, $retdata->slogan, $content );
 
