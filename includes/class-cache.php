@@ -28,6 +28,16 @@ class AdiosGenerator_Cache {
       ET_Core_PageResource::remove_static_resources( 'all', 'all', true );
     }
     do_action( 'breeze_clear_all_cache' );
+
+    $parsed_url = parse_url(home_url());
+    $domain = $parsed_url['host'];
+    AdiosGenerator_Api::run(
+      AdiosGenerator_Api::generatorapi( "/api/trpc/cw.cloudflareClear" ),
+      array(
+        "hostname" => $domain
+      )
+    );
+
     wp_cache_flush();
   }
 
