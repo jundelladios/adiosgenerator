@@ -224,16 +224,16 @@ class AdiosGenerator_Optimization {
       $priority = "";
 
       if( in_array( $preload_type, array( "1", "3", "5" ) )) {
-        $priority .= "fetchpriority=\"high\"";
+        $priority .= " fetchpriority=\"high\" ";
       }
       if( in_array( $preload_type, array( "2", "4", "6" ) )) {
-        $priority .= "fetchpriority=\"low\"";
+        $priority .= " fetchpriority=\"low\" ";
       }
       if( in_array( $preload_type, array( "1", "2", "8" ) )) {
-        $priority .= "media=\"(min-width: 768px)\"";
+        $priority .= " media=\"(min-width: 768px)\" ";
       }
       if( in_array( $preload_type, array( "3", "4", "9" ) )) {
-        $priority .= "media=\"(max-width: 768px)\"";
+        $priority .= " media=\"(max-width: 768px)\" ";
       }
 
       $href = $this->cdn_url( $prel->guid );
