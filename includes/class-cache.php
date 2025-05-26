@@ -43,7 +43,7 @@ class AdiosGenerator_Cache {
 
   public function admin_cache_clear( $admin_bar  ) {
     if ( ! current_user_can( 'manage_options' ) ) { return; } // Security check
-    $cache_clear_url       = esc_url( wp_nonce_url( add_query_arg( 'action', 'adiosgenerator_purge' ), 'adios_generator' ) );
+    $cache_clear_url = admin_url( '?action=adiosgenerator_purge&_wpnonce=' . wp_create_nonce( 'adios_generator' ) );
     
     $admin_bar->add_node( array(
       'id'     => 'generator-purge-all',
