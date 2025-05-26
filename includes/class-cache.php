@@ -21,16 +21,19 @@ class AdiosGenerator_Cache {
     self::clear_cache();
   }
 
-  public static function clear_cache() {
+  public static function cloudflare_clear( $hostpath = null ) {
     $parsed_url = parse_url(home_url());
     $domain = $parsed_url['host'];
     AdiosGenerator_Api::run(
       AdiosGenerator_Api::generatorapi( "/api/trpc/cw.cloudflareClear" ),
       array(
-        "hostname" => $domain
+        "hostname" => $domain,
+        "hostpath" => $hostpath
       )
     );
-    
+  }
+
+  public static function clear_cache() {
     if(class_exists("ET_Core_PageResource")) {
       ET_Core_PageResource::remove_static_resources( 'all', 'all' );
       ET_Core_PageResource::remove_static_resources( 'all', 'all', false, 'dynamic' );
@@ -38,6 +41,7 @@ class AdiosGenerator_Cache {
     }
     do_action( 'breeze_clear_all_cache' );
     wp_cache_flush();
+    self::cloudflare_clear();
   }
 
   public function admin_cache_clear( $admin_bar  ) {

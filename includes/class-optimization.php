@@ -23,9 +23,17 @@ class AdiosGenerator_Optimization {
     
     // breeze buffer cache process
     add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ) );
+    add_filter("breeze_cache_buffer_after_processing", array( $this, "breeze_cache_cloudflare_clear" ) );
     
     // disable wp default fetch priority random
     add_filter( 'wp_get_loading_optimization_attributes', array( $this, "disable_wp_default_fetch_priority" ));
+  }
+
+  public function breeze_cache_cloudflare_clear( $buffer ) {
+    $current_path = rtrim(home_url( add_query_arg( null, null ) ), '/');
+    $current_path = preg_replace('#^https?://(www\.)?#i', '', $current_path);
+    AdiosGenerator_Cache::cloudflare_clear( $current_path );
+    return $buffer;
   }
 
   /**
