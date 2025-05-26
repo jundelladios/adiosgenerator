@@ -237,7 +237,7 @@ class AdiosGenerator_Optimization {
       }
 
       $href = $this->cdn_url( $prel->guid );
-      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority}> ";
+      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} /> ";
     }
 
     /**
