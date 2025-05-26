@@ -28,6 +28,7 @@ class AdiosGenerator_Cache {
       ET_Core_PageResource::remove_static_resources( 'all', 'all', true );
     }
     do_action( 'breeze_clear_all_cache' );
+    wp_cache_flush();
 
     $parsed_url = parse_url(home_url());
     $domain = $parsed_url['host'];
@@ -37,8 +38,6 @@ class AdiosGenerator_Cache {
         "hostname" => $domain
       )
     );
-
-    wp_cache_flush();
   }
 
   public function admin_cache_clear( $admin_bar  ) {
