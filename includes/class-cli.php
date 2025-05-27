@@ -165,7 +165,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
 
       // remove previous logo attachment metadata
-      $slogo = AdiosGenerator_Utilities::get_attachment_by_post_name( "site-logo.png" );
+      $slogo = AdiosGenerator_Utilities::get_attachment_by_post_name( "site-logo" );
       if($slogo) {
         delete_post_meta( $slogo->ID, 'adiosgenerator_disable_lazyload' );
         delete_post_meta( $slogo->ID, 'adiosgenerator_prioritize_background' );
@@ -176,7 +176,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
     }
   }
-
 
   public function site_logo_2( $args, $assoc_args ) {
     $apidata = $this->appWpTokenGet( $assoc_args );

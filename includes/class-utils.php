@@ -13,17 +13,15 @@ class AdiosGenerator_Utilities {
     $args = array(
       'posts_per_page' => 1,
       'post_type'      => 'attachment',
-      'name'           => trim( $post_name ),
+      'post_name'      => trim( $post_name ),
     );
 
-    $get_attachment = new WP_Query( $args );
-    if ( ! $get_attachment || ! isset( $get_attachment->posts, $get_attachment->posts[0] ) ) {
-      return false;
+    $posts = get_posts( $args );
+    if( count( $posts ) ) {
+      return $posts[0];
     }
-
-    return $get_attachment->posts[0];
+    return false;
   }
-
 
 
   public static function upload_file_by_url( $image_url, $alt = null, $fname=null ) {
@@ -31,11 +29,11 @@ class AdiosGenerator_Utilities {
     require_once( ABSPATH . 'wp-admin/includes/file.php' );
 
     $extension = pathinfo($image_url, PATHINFO_EXTENSION);
-    $fname = $fname ? sanitize_title( $fname ) . ".{$extension}" : null;
+    $fname = $fname ? sanitize_title( $fname ) : null;
 
     // prevent redownload if filename already exists or uploaded.
     $filename = basename( $image_url );
-    $attachment = self::get_attachment_by_post_name( $fname ? $fname : $filename );
+    $attachment = self::get_attachment_by_post_name( $fname ? $fname : pathinfo( $image_url, PATHINFO_FILENAME ) );
     if($attachment) {
       return $attachment->ID;
     }
@@ -49,7 +47,7 @@ class AdiosGenerator_Utilities {
 
     // move the temp file into the uploads directory
     $file = array(
-      'name'     => $fname ? $fname : basename( $image_url ),
+      'name'     => $fname ? $fname.".{$extension}" : $filename,
       'type'     => mime_content_type( $temp_file ),
       'tmp_name' => $temp_file,
       'size'     => filesize( $temp_file ),
