@@ -38,10 +38,40 @@ class AdiosGenerator_Cache {
       ET_Core_PageResource::remove_static_resources( 'all', 'all' );
       ET_Core_PageResource::remove_static_resources( 'all', 'all', false, 'dynamic' );
       ET_Core_PageResource::remove_static_resources( 'all', 'all', true );
+      // ensure divi assets propagate the new url.
+      self::cache_warm();
     }
     do_action( 'breeze_clear_all_cache' );
     wp_cache_flush();
     self::cloudflare_clear();
+  }
+
+  public static function cache_warm() {
+    $url = home_url();
+    $response = wp_remote_get( $url, array(
+      'headers' => array(
+        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        'Pragma'        => 'no-cache',
+        'Expires'       => '0',
+        'User-Agent'    => 'WP Cache Warmer Bot/1.0',
+      ),
+      'cache' => false,
+      'timeout' => 15,
+    ));
+
+    if (is_wp_error($response)) {
+      error_log("Cache warming failed for $url: " . $response->get_error_message());
+      return false;
+    }
+
+    $code = wp_remote_retrieve_response_code($response);
+    if ($code == 200) {
+      error_log("Cache warmed successfully!");
+      return true;
+    } else {
+      error_log("Cache warming returned HTTP code $code for $url");
+      return false;
+    }
   }
 
   public function admin_cache_clear( $admin_bar  ) {
