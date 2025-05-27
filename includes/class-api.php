@@ -38,7 +38,8 @@ class AdiosGenerator_Api {
       ),
       'body' => json_encode(array(
         "json" => $this->params
-      ))
+      )),
+      'timeout' => 20
     );
 
     $request = wp_remote_post( $this->endpoint, $apiParams);
