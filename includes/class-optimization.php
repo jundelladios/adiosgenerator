@@ -301,7 +301,7 @@ class AdiosGenerator_Optimization {
         $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
         if( true === in_array( $current_src, $srcs ) ) {
           // if image src has been set to exclude lazy auto add attribute
-          $img_match_new = preg_replace( '/<img\s/i', '<img loading="eager" ', $img_match, 1 );
+          $img_match_new = preg_replace( '/<img\s/i', '<img loading="eager" data-cfasync="false" data-no-lazy="true" ', $img_match, 1 );
           $content = str_replace( $img_match, $img_match_new, $content );
         } else {
           // Add placeholder image as source
