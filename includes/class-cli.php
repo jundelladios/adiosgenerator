@@ -163,6 +163,14 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       // disable lazyload and lcp high prio
       update_post_meta( $logo, "adiosgenerator_disable_lazyload", 1 );
       update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
+
+      // remove previous logo attachment metadata
+      $slogo = AdiosGenerator_Utilities::get_attachment_by_post_name( "site-logo.png" );
+      if($slogo) {
+        delete_post_meta( $slogo->ID, 'adiosgenerator_disable_lazyload' );
+        delete_post_meta( $slogo->ID, 'adiosgenerator_prioritize_background' );
+      }
+
       WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
     } else {
       WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
