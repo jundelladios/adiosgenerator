@@ -23,10 +23,30 @@ class AdiosGenerator_Optimization {
     
     // breeze buffer cache process
     add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ) );
+    add_filter("breeze_cache_buffer_after_processing", array( $this, "breeze_preload_cloudflare_cache" ) );
+
+    // warm cache for CF
+    add_action("adiosgenerator_preload_cache", array( $this, "warm_page_cache_for_cf" ));
     
     // disable wp default fetch priority random
     add_filter( 'wp_get_loading_optimization_attributes', array( $this, "disable_wp_default_fetch_priority" ));
   }
+
+
+  public function breeze_preload_cloudflare_cache( $buffer ) {
+    if (!wp_next_scheduled('adiosgenerator_preload_cache')) {
+      $url = rtrim(home_url( add_query_arg( null, null ) ), '/');
+      wp_schedule_single_event(time() + 10, 'adiosgenerator_preload_cache', [$url]);
+    }
+    return $buffer;
+  }
+
+  public function warm_page_cache_for_cf( $url ) {
+    $preload_cache_url = preg_replace('#^https?://(www\.)?#i', '', $url);
+    AdiosGenerator_Cache::cloudflare_clear( $preload_cache_url );
+    sleep(1);
+  }
+  
 
   /**
    * remove guttenberg css this is not necessary
