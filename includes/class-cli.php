@@ -247,6 +247,25 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
   }
 
 
+  private function gform_notification_to() {
+    $admin_email = get_option('admin_email');
+    global $wpdb;
+
+    $columns = array( 'display_meta', 'notifications' );
+    foreach( $columns as $col ) {
+      error_log( "UPDATE {$wpdb->prefix}gf_form_meta SET {$col} = REPLACE({$col}, %s, %s) WHERE {$col} LIKE %s" );
+      $wpdb->query(
+        $wpdb->prepare(
+          "UPDATE {$wpdb->prefix}gf_form_meta SET {$col} = REPLACE({$col}, %s, %s) WHERE {$col} LIKE %s",
+          '{admin_email}',
+          $admin_email,
+          '%{admin_email}%'
+        )
+      );
+    }
+  }
+
+
   private function dynamic_footer_sitename_replace( $content, $placeholder="", $sitename="" ) {
     $content = wp_unslash( $content );
     $dynamic_contents = et_builder_get_dynamic_contents($content);
@@ -387,6 +406,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     update_option('blogname', $retdata->site_name);
     update_option('blogdescription', $retdata->slogan);
 
+    // gravity forms email
+    $this->gform_notification_to();
     
     $this->clear();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
