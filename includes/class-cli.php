@@ -382,6 +382,11 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       update_post_meta( $front_page_id, '_wds_metadesc', $retdata->meta_description );
       update_post_meta( $front_page_id, '_wds_focus-keywords', $retdata->meta_keyword );
     }
+
+    // site title and tagline
+    update_option('blogname', $retdata->site_name);
+    update_option('blogdescription', $retdata->slogan);
+
     
     $this->clear();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
