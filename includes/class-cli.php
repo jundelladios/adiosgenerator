@@ -247,6 +247,22 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
   }
 
 
+  private function dynamic_footer_sitename_replace( $content, $placeholder="", $sitename="" ) {
+    $content = wp_unslash( $content );
+    $dynamic_contents = et_builder_get_dynamic_contents($content);
+    foreach ( $dynamic_contents as $dynamic_item ) {
+      $dynamic_item_parsed = et_builder_parse_dynamic_content( $dynamic_item );
+      $after_content = $dynamic_item_parsed->get_settings( 'after' );
+      if ( $after_content !== '' ) {
+        $dynamic_item_parsed->set_settings( 'after', str_replace( $placeholder, $sitename, $after_content ) );
+        $re_serialized_dynamic_item = $dynamic_item_parsed->serialize();
+        $content = str_replace( $dynamic_item, $re_serialized_dynamic_item, $content);
+      }
+    }
+    return wp_slash( $content );
+  }
+
+
   public function process_content( $args, $assoc_args ) {
     $apidata = $this->appWpTokenGet( $assoc_args );
     if( !$apidata ) return;
@@ -349,6 +365,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       // site name and slogan
       $content = str_replace( $placeholder->site_name, $retdata->site_name, $content );
       $content = str_replace( $placeholder->tagline, $retdata->slogan, $content );
+
+      $content = $this->dynamic_footer_sitename_replace( $content, $placeholder->site_name, $retdata->site_name );
 
       wp_update_post([
         'ID' => $pst->ID,
