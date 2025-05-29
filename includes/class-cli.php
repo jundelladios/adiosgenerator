@@ -374,6 +374,14 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       ]);
       
     }
+
+    // homepage SEO
+    $front_page_id = get_option( 'page_on_front' );
+    if( $front_page_id ) {
+      update_post_meta( $front_page_id, '_wds_title', $retdata->meta_title );
+      update_post_meta( $front_page_id, '_wds_metadesc', $retdata->meta_description );
+      update_post_meta( $front_page_id, '_wds_focus-keywords', $retdata->meta_keyword );
+    }
     
     $this->clear();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
