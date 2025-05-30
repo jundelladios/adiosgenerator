@@ -252,7 +252,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
 
     $columns = array( 'display_meta', 'notifications' );
     foreach( $columns as $col ) {
-      error_log( "UPDATE {$wpdb->prefix}gf_form_meta SET {$col} = REPLACE({$col}, %s, %s) WHERE {$col} LIKE %s" );
       $wpdb->query(
         $wpdb->prepare(
           "UPDATE {$wpdb->prefix}gf_form_meta SET {$col} = REPLACE({$col}, %s, %s) WHERE {$col} LIKE %s",
