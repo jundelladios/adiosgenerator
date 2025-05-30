@@ -247,8 +247,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
   }
 
 
-  private function gform_notification_to() {
-    $admin_email = get_option('admin_email');
+  private function gform_notification_to( $admin_email ) {
     global $wpdb;
 
     $columns = array( 'display_meta', 'notifications' );
@@ -391,6 +390,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         'ID' => $pst->ID,
         'post_content' => $content
       ]);
+
+      ET_Core_PageResource::do_remove_static_resources( $pst->ID, 'all' );
       
     }
 
@@ -407,7 +408,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     update_option('blogdescription', $retdata->slogan);
 
     // gravity forms email
-    $this->gform_notification_to();
+    $this->gform_notification_to( $retdata->email_address );
     
     $this->clear();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
