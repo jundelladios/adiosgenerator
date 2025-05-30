@@ -261,6 +261,14 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         )
       );
     }
+
+    // delete all gform entries
+    $entry_columns = array( 'entry', 'entry_meta', 'entry_notes' );
+    foreach( $entry_columns as $col ) {
+      $wpdb->query(
+        "DELETE FROM {$wpdb->prefix}gf_{$col}"
+      );
+    }
   }
 
 
