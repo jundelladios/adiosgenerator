@@ -1,9 +1,5 @@
 # AD-IOS Digital Marketing Co - Web Generator
 
-**Tags:** webgenerator, portal, dashboard, management, sync, admin, monitoring   
-**License URI:** https://www.gnu.org/licenses/gpl-2.0.html  
-
-
 ### Description
 
 Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
