@@ -1,5 +1,7 @@
 <?php
 
+namespace WebGenerator;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
@@ -8,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * WP Cli commands for adiosgenerator
  */
-class AdiosGenerator_Api {
+class GeneratorAPI {
 
   private $endpoint;
   private $params = array();

@@ -1,5 +1,7 @@
 <?php
 
+namespace WebGenerator;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
@@ -8,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * Class to handle contents replacements upon sync
  */
-class AdiosGenerator_Supports_GravityForms {
+class GeneratorGravityForms {
 
   public function init() {
     add_filter( 'gform_submit_button', array( $this, "divi_css_class_button" ), 10, 2 );
@@ -16,7 +18,7 @@ class AdiosGenerator_Supports_GravityForms {
   }
   
   public function divi_css_class_button( $button, $form ) {
-    $fragment = WP_HTML_Processor::create_fragment( $button );
+    $fragment = \WP_HTML_Processor::create_fragment( $button );
     $fragment->next_token();
     $fragment->add_class( 'et_pb_button et_pb_gform_button' );
     return $fragment->get_updated_html();
@@ -26,6 +28,3 @@ class AdiosGenerator_Supports_GravityForms {
     wp_enqueue_style( 'gform-divi-adiosgenerator', ADIOSGENERATOR_PLUGIN_URI . 'assets/gravityforms.css' );
   }
 }
-
-
-(new AdiosGenerator_Supports_GravityForms)->init();

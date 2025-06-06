@@ -11,14 +11,14 @@ class ComposerStaticInit0549cbb316d7f82358f32eedff6ed474
     );
 
     public static $prefixLengthsPsr4 = array (
-        'J' => 
+        'W' => 
         array (
-            'Jundell\\Adiosgenerator\\' => 23,
+            'WebGenerator\\' => 13,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Jundell\\Adiosgenerator\\' => 
+        'WebGenerator\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),

@@ -1,25 +1,28 @@
 <?php
 
+namespace WebGenerator;
+
+use WebGenerator\GeneratorAPI;
+use WebGenerator\GeneratorCache;
+use WebGenerator\GeneratorUtilities;
+use WebGenerator\GeneratorProcessContent;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
-}
-
-if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
-	return;
 }
 
 /**
  * 
  * WP Cli commands for adiosgenerator
  */
-class AdiosGenerator_WPCli extends WP_CLI_Command {
+class GeneratorCLI extends \WP_CLI_Command {
 
   /**
    * Clear Divi static resources and all caches
    */
   public function clear() {
-    AdiosGenerator_Cache::clear_cache();
-    WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
+    GeneratorCache::clear_cache();
+    \WP_CLI::success( __( 'All cache has been cleared!', 'adiosgenerator' ) );
   }
 
   /**
@@ -37,10 +40,10 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
      * Store Previews Theme Accent Colors
      * ensure to not override existing option
      */
-    $et_adios_options = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "colors" ), [] );
+    $et_adios_options = get_option( GeneratorUtilities::et_adiosgenerator_option( "colors" ), [] );
     if( function_exists( 'et_get_option' ) && !isset( $et_adios_options["accent_color"] ) ) {
       // ensure to not override existing option
-      update_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "colors" ), array(
+      update_option( GeneratorUtilities::et_adiosgenerator_option( "colors" ), array(
         'accent_color' => et_get_option( 'accent_color', $divi["accent_color"] ),
         'secondary_accent_color' => et_get_option( 'secondary_accent_color', $divi["secondary_accent_color"] )
       ) );
@@ -82,7 +85,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       array('option_name' => 'new_admin_email')
     );
     
-    WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
+    \WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
 
 
@@ -105,27 +108,27 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       }
     }
 
-    WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
+    \WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
 
   private function appWpTokenGet( $assoc_args, $endpoint="appWpSync" ) {
     if( !isset( $assoc_args['token'] ) ) {
-      WP_CLI::error( __( 'You need to specify the --token=<token> parameter', 'adiosgenerator' ) );
+      \WP_CLI::error( __( 'You need to specify the --token=<token> parameter', 'adiosgenerator' ) );
       return false;
     }
     $token = $assoc_args['token'];
-    $data = AdiosGenerator_Api::run(
-      AdiosGenerator_Api::generatorapi( "/api/trpc/appTokens.{$endpoint}" ),
+    $data = GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/appTokens.{$endpoint}" ),
       array(
         "token" => $token
       )
     );
-    $apidata = AdiosGenerator_Api::getResponse( $data );
+    $apidata = GeneratorAPI::getResponse( $data );
     if(!$apidata) {
-      WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
+      \WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
       return false;
     }
-    AdiosGenerator_Utilities::disable_post_revision();
+    GeneratorUtilities::disable_post_revision();
     return $apidata;
   }
 
@@ -140,8 +143,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       "text" => ucwords($retdata->site_name),
       "width" => 400,
       "height" => 70,
-      "background" => implode(",", AdiosGenerator_Utilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", AdiosGenerator_Utilities::hexToRgba( "#FFFFFF" )),
+      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
+      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
       "fontSize" => 25,
       "font" => $retdata->header_font,
       "format" => ".png"
@@ -149,14 +152,14 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     $logoparams = http_build_query( $logoparams );
     $mainLogoPlaceholder = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/logo?{$logoparams}";
     $thelogo = $retdata->logo ? $retdata->logo : $mainLogoPlaceholder;
-    $logo = AdiosGenerator_Utilities::upload_file_by_url(
+    $logo = GeneratorUtilities::upload_file_by_url(
       $thelogo,
       sanitize_title( $retdata->site_name . "-logo" ),
       sanitize_title( $retdata->site_name . "-logo" )
     );
     
     if( $logo ) {
-      update_option( AdiosGenerator_Utilities::et_adiosgenerator_option("logo"), $logo );
+      update_option( GeneratorUtilities::et_adiosgenerator_option("logo"), $logo );
       if( function_exists( 'et_update_option') ) {
         et_update_option( "divi_logo", wp_get_attachment_url( $logo ) );
       }
@@ -165,15 +168,15 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
 
       // remove previous logo attachment metadata
-      $slogo = AdiosGenerator_Utilities::get_attachment_by_post_name( "site-logo" );
+      $slogo = GeneratorUtilities::get_attachment_by_post_name( "site-logo" );
       if($slogo) {
         delete_post_meta( $slogo->ID, 'adiosgenerator_disable_lazyload' );
         delete_post_meta( $slogo->ID, 'adiosgenerator_prioritize_background' );
       }
 
-      WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
+      \WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
     } else {
-      WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
+      \WP_CLI::error( __( 'Failed to set logo', 'adiosgenerator' ) );
     }
   }
 
@@ -188,8 +191,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       "text" => ucwords($retdata->site_name),
       "width" => 400,
       "height" => 70,
-      "background" => implode(",", AdiosGenerator_Utilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", AdiosGenerator_Utilities::hexToRgba( "#FFFFFF" )),
+      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
+      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
       "fontSize" => 25,
       "font" => $retdata->header_font,
       "format" => ".png"
@@ -197,17 +200,17 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     $logoparams = http_build_query( $logoparams );
     $mainLogoPlaceholder = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/logo?{$logoparams}";
     $thelogo = $retdata->logo ? $retdata->logo : $mainLogoPlaceholder;
-    $logo = AdiosGenerator_Utilities::upload_file_by_url(
+    $logo = GeneratorUtilities::upload_file_by_url(
       $thelogo,
       sanitize_title( $retdata->site_name . "-logo-2" ),
       sanitize_title( $retdata->site_name . "-logo-2" )
     );
     
     if( $logo ) {
-      update_option( AdiosGenerator_Utilities::et_adiosgenerator_option("logo_2"), $logo );
-      WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
+      update_option( GeneratorUtilities::et_adiosgenerator_option("logo_2"), $logo );
+      \WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $logo, 'adiosgenerator' ) );
     } else {
-      WP_CLI::error( __( 'Failed to set logo 2', 'adiosgenerator' ) );
+      \WP_CLI::error( __( 'Failed to set logo 2', 'adiosgenerator' ) );
     }
   }
 
@@ -223,8 +226,8 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       "text" => ucwords(substr( $retdata->site_name, 0, 1 )),
       "width" => 512,
       "height" => 512,
-      "background" => implode(",", AdiosGenerator_Utilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", AdiosGenerator_Utilities::hexToRgba( "#FFFFFF" )),
+      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
+      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
       "fontSize" => 500,
       "font" => $retdata->header_font,
       "format" => ".png"
@@ -232,7 +235,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     $placeholdFavicon = http_build_query( $placeholdFavicon );
     $placeholdFavicon = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/favicon?{$placeholdFavicon}";
     $thefavicon = $retdata->favicon ? $retdata->favicon : $placeholdFavicon;
-    $favicon = AdiosGenerator_Utilities::upload_file_by_url(
+    $favicon = GeneratorUtilities::upload_file_by_url(
       $thefavicon,
       sanitize_title( $retdata->site_name . "-favicon" ),
       sanitize_title( $retdata->site_name . "-favicon" )
@@ -240,15 +243,18 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     
     if( $favicon ) {
       update_option( 'site_icon', $favicon );
-      WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $favicon, 'adiosgenerator' ) );
+      \WP_CLI::success( __( 'Logo has been set, attachment ID: ' . $favicon, 'adiosgenerator' ) );
     } else {
-      WP_CLI::error( __( 'Failed to set favicon', 'adiosgenerator' ) );
+      \WP_CLI::error( __( 'Failed to set favicon', 'adiosgenerator' ) );
     }
   }
 
 
   private function gform_notification_replace_default_email( $admin_email ) {
     global $wpdb;
+
+    // disregard if there's no gravity form
+    if ( !class_exists( 'GFCommon' ) ) { return false; }
 
     $columns = array( 'display_meta', 'notifications' );
     foreach( $columns as $col ) {
@@ -310,15 +316,15 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
       )
     ));
 
-    $prevColors = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "colors" ), array(
+    $prevColors = get_option( GeneratorUtilities::et_adiosgenerator_option( "colors" ), array(
       'accent_color' => et_get_option( 'accent_color', $divi["accent_color"] ),
       'secondary_accent_color' => et_get_option( 'secondary_accent_color', $divi["secondary_accent_color"] )
     ));
 
 
-    $logo = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "logo" ) );
-    $logo2 = get_option( AdiosGenerator_Utilities::et_adiosgenerator_option( "logo_2" ) );
-    $smFields = (new ET_Builder_Module_Social_Media_Follow_Item)->get_fields();
+    $logo = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo" ) );
+    $logo2 = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo_2" ) );
+    $smFields = (new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields();
 
     foreach( $posts as $pst ) {
       $content = $pst->post_content;
@@ -344,7 +350,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
 
       // maps and address replace
       $content = str_replace( $placeholder->site_address, $retdata->site_address, $content);
-      $content = (new AdiosGenerator_Process_Content)->replace_google_maps_iframe_address( $content, $retdata->site_address );
+      $content = (new GeneratorProcessContent)->replace_google_maps_iframe_address( $content, $retdata->site_address );
       $content = str_replace( 
         str_replace( " ", "+", $placeholder->site_address ), 
         str_replace( " ", "+", $retdata->site_address ),
@@ -398,7 +404,7 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
         'post_content' => $content
       ]);
 
-      ET_Core_PageResource::do_remove_static_resources( $pst->ID, 'all' );
+      \ET_Core_PageResource::do_remove_static_resources( $pst->ID, 'all' );
       
     }
 
@@ -418,11 +424,6 @@ class AdiosGenerator_WPCli extends WP_CLI_Command {
     $this->gform_notification_replace_default_email( $retdata->email_address );
     
     $this->clear();
-    WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
+    \WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
   }
 }
-
-WP_CLI::add_command(
-  'adiosgenerator',
-  'AdiosGenerator_WPCli'
-);

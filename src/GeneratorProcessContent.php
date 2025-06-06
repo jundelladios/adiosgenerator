@@ -1,5 +1,7 @@
 <?php
 
+namespace WebGenerator;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
@@ -8,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * Class to handle contents replacements upon sync
  */
-class AdiosGenerator_Process_Content {
+class GeneratorProcessContent {
 
   public function replace_google_maps_iframe_address($content, $address) {
     return preg_replace_callback(
@@ -20,7 +22,7 @@ class AdiosGenerator_Process_Content {
 
   public function get_social_items() {
     if( class_exists( 'ET_Builder_Module_Social_Media_Follow_Item' )) {
-      return wp_send_json_success((new ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
+      return wp_send_json_success((new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
     }
     return wp_send_json_success([]);
   }
@@ -36,9 +38,6 @@ class AdiosGenerator_Process_Content {
         }
       ));
     });
-
   }
 
 }
-
-(new AdiosGenerator_Process_Content)->routes();

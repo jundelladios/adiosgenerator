@@ -1,10 +1,12 @@
 <?php
 
+namespace WebGenerator;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-class AdiosGenerator_Utilities {
+class GeneratorUtilities {
 
   /**
    * Get attachment by post name
@@ -16,7 +18,7 @@ class AdiosGenerator_Utilities {
       'name'           => trim( $post_name ),
     );
 
-    $get_attachment = new WP_Query( $args );
+    $get_attachment = new \WP_Query( $args );
     if ( ! $get_attachment || ! isset( $get_attachment->posts, $get_attachment->posts[0] ) ) {
       return false;
     }

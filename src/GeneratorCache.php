@@ -1,5 +1,9 @@
 <?php
 
+namespace WebGenerator;
+
+use WebGenerator\GeneratorAPI;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
@@ -8,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * Class to handle contents replacements upon sync
  */
-class AdiosGenerator_Cache {
+class GeneratorCache {
 
   public function init() {
     add_action( 'admin_bar_menu', array( $this, "admin_cache_clear" ), 1000 );
@@ -24,8 +28,8 @@ class AdiosGenerator_Cache {
   public static function cloudflare_clear( $hostpath = null ) {
     $parsed_url = parse_url(home_url());
     $domain = $parsed_url['host'];
-    AdiosGenerator_Api::run(
-      AdiosGenerator_Api::generatorapi( "/api/trpc/cw.cloudflareClear" ),
+    GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/cw.cloudflareClear" ),
       array(
         "hostname" => $domain,
         "hostpath" => $hostpath
@@ -35,9 +39,9 @@ class AdiosGenerator_Cache {
 
   public static function clear_cache() {
     if(class_exists("ET_Core_PageResource")) {
-      ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
-      ET_Core_PageResource::do_remove_static_resources( 'all', 'all', false, 'dynamic' );
-      ET_Core_PageResource::do_remove_static_resources( 'all', 'all', true );
+      \ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
+      \ET_Core_PageResource::do_remove_static_resources( 'all', 'all', false, 'dynamic' );
+      \ET_Core_PageResource::do_remove_static_resources( 'all', 'all', true );
       // ensure divi assets propagate the new url.
     }
     do_action( 'breeze_clear_all_cache' );
@@ -80,5 +84,3 @@ class AdiosGenerator_Cache {
     }
   }
 }
-
-(new AdiosGenerator_Cache)->init();

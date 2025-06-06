@@ -1,5 +1,7 @@
 <?php
 
+namespace WebGenerator;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
@@ -8,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * Class to handle contents replacements upon sync
  */
-class AdiosGenerator_Optimization {
+class GeneratorOptimization {
 
   public function init() {
     add_action( 'wp_enqueue_scripts', array( $this, "remove_unecessary_styles" ), 100 );
@@ -251,9 +253,9 @@ class AdiosGenerator_Optimization {
 
 
   public function cdn_url( $url ) {
-    if ( class_exists( 'Breeze_Options_Reader' ) && !empty( Breeze_Options_Reader::get_option_value( 'cdn-active' )) && !empty( Breeze_Options_Reader::get_option_value( 'cdn-url' ) ) ) {
+    if ( class_exists( 'Breeze_Options_Reader' ) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-active' )) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-url' ) ) ) {
       $site_url = get_site_url();
-      $cdn_url = Breeze_Options_Reader::get_option_value( 'cdn-url' );
+      $cdn_url = \Breeze_Options_Reader::get_option_value( 'cdn-url' );
       return str_replace($site_url . '/wp-content/', $cdn_url . '/wp-content/', $url);
     }
 
@@ -406,6 +408,3 @@ class AdiosGenerator_Optimization {
     return $attributes;
   }
 }
-
-
-(new AdiosGenerator_Optimization)->init();

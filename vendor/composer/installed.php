@@ -1,19 +1,19 @@
 <?php return array(
     'root' => array(
-        'name' => 'jundell/adiosgenerator',
+        'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'a0f28bcf5942e4774bf40fd2833b3e7350019f05',
+        'reference' => '4d5d5a2534d4e2960ba00afdcda5cc2c5cf88073',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
-        'jundell/adiosgenerator' => array(
+        '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'a0f28bcf5942e4774bf40fd2833b3e7350019f05',
+            'reference' => '4d5d5a2534d4e2960ba00afdcda5cc2c5cf88073',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

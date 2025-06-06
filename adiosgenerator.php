@@ -9,16 +9,23 @@
  * License: GPL-2.0+
  * Domain Path: /languages
  */
+defined( 'ABSPATH' ) || die( 'No direct script access allowed!' );
 
 require __DIR__ . '/vendor/autoload.php';
+
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+use WebGenerator\GeneratorCLI;
+use WebGenerator\GeneratorGravityForms;
+use WebGenerator\GeneratorSSO;
+use WebGenerator\GeneratorProcessContent;
+use WebGenerator\GeneratorOptimization;
+use WebGenerator\GeneratorCache;
+
 PucFactory::buildUpdateChecker(
   'https://github.com/jundelladios/adiosgenerator',
   __FILE__,
   'adiosgenerator'
 );
-
-defined( 'ABSPATH' ) || die( 'No direct script access allowed!' );
 
 define("ADIOSGENERATOR_PLUGIN_URI", trailingslashit( plugin_dir_url( __FILE__ ) ) );
 
@@ -31,18 +38,31 @@ if( file_exists( ABSPATH . 'wp-adiosgenerator-config.php' ) ) {
 	define("ADIOSGENERATOR_LOGOMAKER_URL", "https://adios-webgenerator.com");
 }
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-utils.php";
+// CLI
+if (defined('WP_CLI') && WP_CLI) {
+	WP_CLI::add_command(
+		'adiosgenerator',
+		GeneratorCLI::class
+	);
+}
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-process-content.php";
+// Gravity Forms
+(new GeneratorGravityForms)->init();
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-api.php";
+// SSO
+function adiosgenerator_initialize_sso() {
+  $token = isset( $_GET["wpgentoken"] ) ? $_GET["wpgentoken"] : "";
+  $redirect = isset( $_GET["wpgenredirect"] ) ? $_GET["wpgenredirect"] : "";
+  $post = isset( $_GET["post"] ) ? $_GET["post"] : "";
+  GeneratorSSO::init( $token, $redirect, $post );
+}
+add_action('plugins_loaded', "adiosgenerator_initialize_sso");
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-sso.php";
+// process content api
+(new GeneratorProcessContent)->routes();
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/supports/class-gravityforms.php";
+// optimization
+(new GeneratorOptimization)->init();
 
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-optimization.php";
-
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-cache.php";
-
-require_once ADIOSGENERATOR_PLUGIN_DIR . "includes/class-cli.php";
+// caching
+(new GeneratorCache)->init();

@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Jundell\\Adiosgenerator\\' => array($baseDir . '/src'),
+    'WebGenerator\\' => array($baseDir . '/src'),
 );

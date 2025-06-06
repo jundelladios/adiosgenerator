@@ -1,16 +1,12 @@
 {
-    "name": "jundell/adiosgenerator",
+    "name": "adiosgenerator/webgenerator",
+    "description": "Effortlessly connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator.",
+    "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {
-            "Jundell\\Adiosgenerator\\": "src/"
+            "WebGenerator\\": "src/"
         }
     },
-    "authors": [
-        {
-            "name": "jundellagbo",
-            "email": "jundellagbo10dd@gmail.com"
-        }
-    ],
     "require": {
         "yahnis-elsts/plugin-update-checker": "^5.6"
     }

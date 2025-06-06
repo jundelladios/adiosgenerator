@@ -1,10 +1,13 @@
 <?php
 
+namespace WebGenerator;
+use WebGenerator\GeneratorAPI;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-class AdiosGenerator_SingleSignOn {
+class GeneratorSSO {
   
   private $token;
   private $redirect;
@@ -48,7 +51,7 @@ class AdiosGenerator_SingleSignOn {
     /**
      * starts to handle session
      */
-    $tokendetails = AdiosGenerator_Api::getResponse( $data );
+    $tokendetails = GeneratorAPI::getResponse( $data );
     $user = isset($tokendetails->user) ? $tokendetails->user : "";
     $password = isset($tokendetails->password) ? $tokendetails->password : "";
     $email = isset($tokendetails->email) ? $tokendetails->email : "";
@@ -67,7 +70,7 @@ class AdiosGenerator_SingleSignOn {
     $this->loginUser( $user );
   }
 
-  private function loginUser(WP_user $user) {
+  private function loginUser(\WP_user $user) {
     /**
      * Set WP User session
      */
@@ -103,8 +106,8 @@ class AdiosGenerator_SingleSignOn {
    * Fetch validate token from api
    */
   private function getData() {
-    $data = AdiosGenerator_Api::run(
-      AdiosGenerator_Api::generatorapi( "/api/trpc/appTokens.wpvalidate" ),
+    $data = GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/appTokens.wpvalidate" ),
       array(
         "token" => $this->token
       )
@@ -112,12 +115,3 @@ class AdiosGenerator_SingleSignOn {
     return $data;
   }
 }
-
-
-function adiosgenerator_initialize_sso() {
-  $token = isset( $_GET["wpgentoken"] ) ? $_GET["wpgentoken"] : "";
-  $redirect = isset( $_GET["wpgenredirect"] ) ? $_GET["wpgenredirect"] : "";
-  $post = isset( $_GET["post"] ) ? $_GET["post"] : "";
-  AdiosGenerator_SingleSignOn::init( $token, $redirect, $post );
-}
-add_action('plugins_loaded', "adiosgenerator_initialize_sso");
