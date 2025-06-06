@@ -1,10 +1,9 @@
 === AD-IOS Digital Marketing Co - Web Generator ===
-Contributors: gmulti, truchot, wplio
-Tags: webgenerator, portal, dashboard, monitoring
-Requires at least: 5.8
-Tested up to: 6.7
-Requires PHP: 7.4
-Stable tag: v1.0.0
+Contributors: jundelladios, jundellagbo
+Tags: webgenerator, portal, dashboard, management, sync, admin, monitoring
+Requires at least: 6.8
+Tested up to: 6.3
+Requires PHP: 8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,12 +11,17 @@ This plugin used to connect our clients websites in to our platform.
 
 == Description ==
 
-AD-IOS Digital Marketing Co. (Web Generator) is a client dashboard provided by AD-IOS Team:
+Effortlessly connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
+
+== Features ==
+
+* Secure dashboard integration for remote site management
+* Centralized control over site settings, content, and updates
+* Real-time data synchronization with the dashboard
 
 == Installation ==
 
-= Minimum Requirements for AD-IOS Digital Marketing Co. (Web Generator) =
-* WordPress 5.8 or greater
-* PHP version 7.4 or greater
-
-== Changelog ==
+* Download plugin from https://github.com/jundelladios/adiosgenerator
+* Upload the plugin files to the `/wp-content/plugins` directory, or install the plugin through the WordPress plugins screen directly.
+* Activate the plugin through the ‘Plugins’ screen in WordPress.
+* Navigate to the plugin settings page to connect your site to the dashboard.
