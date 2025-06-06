@@ -4,7 +4,7 @@
 
 **Tags:** webgenerator, portal, dashboard, management, sync, admin, monitoring
 
-**Tested up to:** 6.8.1
+**Tested up to:** 6.3
 
 **Requires PHP:** 8.1
 

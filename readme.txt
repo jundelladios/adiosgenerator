@@ -1,7 +1,7 @@
 === AD-IOS Digital Marketing Co - Web Generator ===
 Contributors: jundelladios, jundellagbo
 Tags: webgenerator, portal, dashboard, management, sync, admin, monitoring
-Tested up to: 6.8.1
+Tested up to: 6.3
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
