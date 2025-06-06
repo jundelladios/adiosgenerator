@@ -3,14 +3,14 @@
 **Contributors:** jundelladios, jundellagbo
 **Tags:** webgenerator, portal, dashboard, management, sync, admin, monitoring
 **Requires at least:** 6.8
-**Tested up to:** 6.3  
+**Tested up to:** 6.8.1  
 **Requires PHP:** 8.1
 **License:** GPLv2 or later  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html  
 
 ## Description
 
-Effortlessly connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
+Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
 
 ### Features
 - Secure dashboard integration for remote site management
