@@ -1,0 +1,17 @@
+{
+    "name": "jundell/adiosgenerator",
+    "autoload": {
+        "psr-4": {
+            "Jundell\\Adiosgenerator\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "jundellagbo",
+            "email": "jundellagbo10dd@gmail.com"
+        }
+    ],
+    "require": {
+        "yahnis-elsts/plugin-update-checker": "^5.6"
+    }
+}
