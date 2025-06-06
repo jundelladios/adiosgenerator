@@ -1,6 +1,6 @@
 {
     "name": "adiosgenerator/webgenerator",
-    "description": "Effortlessly connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator.",
+    "description": "Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator.",
     "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {

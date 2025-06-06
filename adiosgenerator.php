@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: AD-IOS Web Generator
- * Description: Effortlessly connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
- * Version: 2.0.0
+ * Description: Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
+ * Version: 2.0.1
  * Text Domain: adiosgenerator
  * Author: AD-IOS Digital Marketing Co.
  * Author URI: https://ad-ios.com/
