@@ -2,7 +2,6 @@
 
 **Contributors:** jundelladios, jundellagbo
 **Tags:** webgenerator, portal, dashboard, management, sync, admin, monitoring
-**Requires at least:** 6.8
 **Tested up to:** 6.8.1  
 **Requires PHP:** 8.1
 **License:** GPLv2 or later  
