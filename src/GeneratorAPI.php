@@ -14,35 +14,72 @@ class GeneratorAPI {
 
   private $endpoint;
   private $params = array();
+  private $token = null;
 
-  public function __construct( $endpoint, $params ) {
+  public function __construct( $endpoint, $params, $token ) {
     $this->endpoint = $endpoint;
     $this->params = $params;
+    $this->token = $token;
   }
 
   // possibly use for another endpoint
-  public static function run( $endpoint, $params ) {
-    $instance = new static( $endpoint, $params );
+  public static function run( $endpoint, $params, $token=null ) {
+    $instance = new static( $endpoint, $params, $token );
     return $instance->execute();
   }
 
   // call this method if using web generator api
   public static function generatorapi( $endpoint ) {
-    return ADIOSGENERATOR_API_URL . $endpoint;
+    return constant("ADIOSGENERATOR_API_URL") . $endpoint;
   }
 
-  // executing post method only.
-  private function execute() {
+  private function getToken() {
+    $apiKey = constant("DIVA_LAUNCH_APIKEY");
+    if( !$apiKey ) return null;
+
     $apiParams = array(
       'headers' => array(
         'Content-Type' => 'application/json',
         'Accept' => 'application/json'
       ),
       'body' => json_encode(array(
-        "json" => $this->params
-      )),
-      'timeout' => 20
+        "json" => array(
+          "token" => constant("DIVA_LAUNCH_APIKEY")
+        )
+      ))
     );
+
+    $request = wp_remote_post( self::generatorapi( "/api/trpc/appTokens.oauth" ), $apiParams);
+    if( is_wp_error( $request )) {
+      return false;
+    }
+
+    $body = wp_remote_retrieve_body( $request );
+    $json = json_decode( $body );
+    if( !$json ) { return false; }
+    if( isset( $json->error ) ) { return false; }
+
+    $resp = self::getResponse( $json );
+    return $resp;
+  }
+
+  // executing post method only.
+  private function execute() {
+    if( !$this->token ) {
+      $this->token = $this->getToken();
+    }
+
+    $apiParams = array(
+      'headers' => array(
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+      ),
+      'body' => json_encode(array(
+        "json" => $this->params
+      ))
+    );
+
+    $apiParams['headers']['Authorization'] = "Bearer {$this->token}";
 
     $request = wp_remote_post( $this->endpoint, $apiParams);
     if( is_wp_error( $request )) {

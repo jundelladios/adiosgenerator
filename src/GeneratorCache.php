@@ -25,14 +25,13 @@ class GeneratorCache {
     self::clear_cache();
   }
 
-  public static function cloudflare_clear( $hostpath = null ) {
+  public static function cloudflare_clear() {
     $parsed_url = parse_url(home_url());
     $domain = $parsed_url['host'];
     GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/cw.cloudflareClear" ),
       array(
-        "hostname" => $domain,
-        "hostpath" => $hostpath
+        "hostname" => $domain
       )
     );
   }
@@ -66,21 +65,20 @@ class GeneratorCache {
         wp_die('Security check failed');
       }
       $this->clear_cache_call();
-      wp_redirect(admin_url('index.php?adiosgenerator_cleaned=1'));
+      set_transient('adiosgenerator_cleaned' . get_current_user_id(), true, 30);
+      wp_redirect( admin_url() );
       exit;
     }
   }
 
   public function cache_clear_message() {
-    if (isset($_GET['adiosgenerator_cleaned'])) {
+    if (get_transient('adiosgenerator_cleaned' . get_current_user_id())) {
       ?>
       <div class="notice notice-success is-dismissible">
         <p>Web Generator cache has been cleared!</p>
-        <a href="<?php echo admin_url(); ?>" class="notice-dismiss" style="text-decoration: none;">
-          <span class="screen-reader-text">Dismiss this notice.</span>
-        </a>
       </div>
       <?php
+       delete_transient('adiosgenerator_cleaned' . get_current_user_id());
     }
   }
 }

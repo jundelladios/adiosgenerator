@@ -27,17 +27,4 @@ class GeneratorProcessContent {
     return wp_send_json_success([]);
   }
 
-  public function routes() {
-    add_action( "rest_api_init", function() {
-
-      register_rest_route( 'adiosgenerator', 'social-lists', array(
-        'methods' => 'GET',
-        'callback' => array( $this, "get_social_items" ),
-        'permission_callback' => function() {
-          return "__false";
-        }
-      ));
-    });
-  }
-
 }

@@ -117,11 +117,11 @@ class GeneratorCLI extends \WP_CLI_Command {
       return false;
     }
     $token = $assoc_args['token'];
+    error_log( "APP WP GET TOKEN " . $token );
     $data = GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/appTokens.{$endpoint}" ),
-      array(
-        "token" => $token
-      )
+      array(),
+      $token
     );
     $apidata = GeneratorAPI::getResponse( $data );
     if(!$apidata) {
@@ -139,19 +139,7 @@ class GeneratorCLI extends \WP_CLI_Command {
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
-    $logoparams = array(
-      "text" => ucwords($retdata->site_name),
-      "width" => 400,
-      "height" => 70,
-      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
-      "fontSize" => 25,
-      "font" => $retdata->header_font,
-      "format" => ".png"
-    );
-    $logoparams = http_build_query( $logoparams );
-    $mainLogoPlaceholder = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/logo?{$logoparams}";
-    $thelogo = $retdata->logo ? $retdata->logo : $mainLogoPlaceholder;
+    $thelogo = $retdata->logo;
     $logo = GeneratorUtilities::upload_file_by_url(
       $thelogo,
       sanitize_title( $retdata->site_name . "-logo" ),
@@ -165,8 +153,6 @@ class GeneratorCLI extends \WP_CLI_Command {
       }
       // disable lazyload and lcp high prio
       update_post_meta( $logo, "adiosgenerator_disable_lazyload", 1 );
-      update_post_meta( $logo, "adiosgenerator_prioritize_background", 5 );
-
       // remove previous logo attachment metadata
       $slogo = GeneratorUtilities::get_attachment_by_post_name( "site-logo" );
       if($slogo) {
@@ -180,26 +166,14 @@ class GeneratorCLI extends \WP_CLI_Command {
     }
   }
 
-  public function site_logo_2( $args, $assoc_args ) {
+  public function site_secondary_logo( $args, $assoc_args ) {
     $apidata = $this->appWpTokenGet( $assoc_args );
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
-    $logoparams = array(
-      "text" => ucwords($retdata->site_name),
-      "width" => 400,
-      "height" => 70,
-      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
-      "fontSize" => 25,
-      "font" => $retdata->header_font,
-      "format" => ".png"
-    );
-    $logoparams = http_build_query( $logoparams );
-    $mainLogoPlaceholder = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/logo?{$logoparams}";
-    $thelogo = $retdata->logo ? $retdata->logo : $mainLogoPlaceholder;
+    $thelogo = $retdata->logo;
     $logo = GeneratorUtilities::upload_file_by_url(
       $thelogo,
       sanitize_title( $retdata->site_name . "-logo-2" ),
@@ -222,19 +196,7 @@ class GeneratorCLI extends \WP_CLI_Command {
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
 
-    $placeholdFavicon = array(
-      "text" => ucwords(substr( $retdata->site_name, 0, 1 )),
-      "width" => 512,
-      "height" => 512,
-      "background" => implode(",", GeneratorUtilities::hexToRgba( $divi["accent_color"] )),
-      "color" => implode(",", GeneratorUtilities::hexToRgba( "#FFFFFF" )),
-      "fontSize" => 500,
-      "font" => $retdata->header_font,
-      "format" => ".png"
-    );
-    $placeholdFavicon = http_build_query( $placeholdFavicon );
-    $placeholdFavicon = ADIOSGENERATOR_LOGOMAKER_URL . "/logomaker/favicon?{$placeholdFavicon}";
-    $thefavicon = $retdata->favicon ? $retdata->favicon : $placeholdFavicon;
+    $thefavicon = $retdata->favicon;
     $favicon = GeneratorUtilities::upload_file_by_url(
       $thefavicon,
       sanitize_title( $retdata->site_name . "-favicon" ),
@@ -321,13 +283,17 @@ class GeneratorCLI extends \WP_CLI_Command {
       'secondary_accent_color' => et_get_option( 'secondary_accent_color', $divi["secondary_accent_color"] )
     ));
 
-
     $logo = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo" ) );
     $logo2 = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo_2" ) );
     $smFields = (new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields();
 
+    $postIds = array();
     foreach( $posts as $pst ) {
       $content = $pst->post_content;
+
+      if( !empty( trim( $content ) )) {
+        $postIds[] = $pst->ID;
+      }
 
       // accents replace
       $content = preg_replace('/' . preg_quote($prevColors["accent_color"], '/') . '/i', $divi["accent_color"], $content);
@@ -405,8 +371,14 @@ class GeneratorCLI extends \WP_CLI_Command {
       ]);
 
       \ET_Core_PageResource::do_remove_static_resources( $pst->ID, 'all' );
-      
     }
+
+    GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/appTokens.processContentAI" ),
+      array(
+        "postIds" => $postIds
+      )
+    );
 
     // homepage SEO
     $front_page_id = get_option( 'page_on_front' );

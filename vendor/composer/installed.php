@@ -1,20 +1,20 @@
 <?php return array(
     'root' => array(
-        'name' => '__root__',
+        'name' => 'adiosgenerator/webgenerator',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '4d5d5a2534d4e2960ba00afdcda5cc2c5cf88073',
-        'type' => 'library',
+        'reference' => '31bcdac221f0cad869695e3006804c9b17eb54f8',
+        'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
-        '__root__' => array(
+        'adiosgenerator/webgenerator' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '4d5d5a2534d4e2960ba00afdcda5cc2c5cf88073',
-            'type' => 'library',
+            'reference' => '31bcdac221f0cad869695e3006804c9b17eb54f8',
+            'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
