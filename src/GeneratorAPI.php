@@ -34,6 +34,9 @@ class GeneratorAPI {
   }
 
   private function getToken() {
+    if( !defined('DIVA_LAUNCH_APIKEY') ) {
+      return null;
+    }
     $apiKey = constant("DIVA_LAUNCH_APIKEY");
     if( !$apiKey ) return null;
 
