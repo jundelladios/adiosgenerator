@@ -25,9 +25,6 @@ class GeneratorOptimization {
     
     // breeze buffer cache process
     add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ) );
-    
-    // disable wp default fetch priority random
-    add_filter( 'wp_get_loading_optimization_attributes', array( $this, "disable_wp_default_fetch_priority" ));
   }
   
 
@@ -66,9 +63,7 @@ class GeneratorOptimization {
     
     $custom_css = "<style type=\"text/css\" id=\"wp-generator-custom-css-optimization\">";
     
-    /**
-     * css for global variables
-     */
+    // css for global variables
     $custom_css .= ":root {";
     $custom_css .= "--divi-primary-color: {$accent_color};";
     $custom_css .= "--divi-secondary-color: {$secondary_accent_color};";
@@ -79,10 +74,7 @@ class GeneratorOptimization {
     }
     $custom_css .= "}";
 
-    /**
-     * css for lazy backgrounds
-     */
-
+    // css for lazy backgrounds
     if( $this->is_optimize()):
     $custom_css .= "
     .et_pb_slider:not(.no-lazyload, .entered) .et_pb_slide,
@@ -102,9 +94,7 @@ class GeneratorOptimization {
     echo $custom_css;
   }
 
-  /**
-   * breeze divi lazybackground and images scripts
-   */
+  // breeze divi lazybackground and images scripts
   public function divi_lazy_images() {
     $custom_js = "<script type=\"text/javascript\" id=\"wp-generator-custom-js-optimization\">";
 
@@ -132,15 +122,6 @@ class GeneratorOptimization {
 
   private function attachment_fields() {
     return array(
-      array(
-        "label" => "LCP: Disable Lazyload Media",
-        "name" => "adiosgenerator_disable_lazyload",
-        "options" => array(
-          "No" => "0",
-          "Yes" => "1"
-        ),
-        "helps" => __( 'If set, Make sure this attachment is in the ABOVE THE FOLD content.', 'adiosgenerator' )
-      ),
       array(
         "label" => "LCP: Prioritize Background Image",
         "name" => "adiosgenerator_prioritize_background",
@@ -198,16 +179,12 @@ class GeneratorOptimization {
   
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
-    $buffer = $this->process_lazyload_medias( $buffer );
     $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
     return $buffer;
   }
 
   public function process_preload_medias( $content ) {
     
-    /**
-     * Image Preload Handle, priority load images.
-     */
     // get prioritize urls
     $preloads = get_posts(array(
       "post_type" => "attachment",
@@ -243,9 +220,7 @@ class GeneratorOptimization {
       $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} /> ";
     }
 
-    /**
-     * insert priorities in head tag
-     */
+    // insert priorities in head tag
     $content = str_replace( "</head>", $preload_lists . "</head>", $content );
 
     return $content;
@@ -260,151 +235,5 @@ class GeneratorOptimization {
     }
 
     return $url;
-  }
-
-
-  public function process_lazyload_medias( $content ) {
-
-    /**
-     * Images lazyload handle processing
-     */
-
-    // get exclude lazyload urls
-    $excludes = get_posts(array(
-      "post_type" => "attachment",
-      "posts_per_page" => -1,
-      "meta_key" => "adiosgenerator_disable_lazyload",
-      "meta_value" => 1,
-      "compare" => "="
-    ));
-
-    $srcs = array();
-    foreach( $excludes as $exl ) {
-      $excludeURL = $this->cdn_url($exl->guid);
-      $srcs[] = $this->cdn_url($exl->guid);
-    }
-
-    /**
-     * Fetch all images
-     */
-    preg_match_all( '/<img[^>]+>/i', $content, $img_matches );
-
-    $img_matches[0] = array_filter(
-      $img_matches[0],
-      function ( $tag ) {
-        return strpos( $tag, '\\' ) === false;
-      }
-    );
-
-    if ( ! empty( $img_matches[0] ) ) {
-      foreach ( $img_matches[0] as $img_match ) {
-        // Get the image URL
-        preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $img_match, $src_value );
-        $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
-        if( true === in_array( $current_src, $srcs ) ) {
-          // if image src has been set to exclude lazy auto add attribute
-          $img_match_new = preg_replace( '/<img\s/i', '<img loading="eager" data-cfasync="false" data-no-lazy="true" ', $img_match, 1 );
-          $content = str_replace( $img_match, $img_match_new, $content );
-        } else {
-          // Add placeholder image as source
-
-          // Add lazy-load data attribute.
-          $img_match_new = preg_replace( '/(<img\s+)/', '$1data-breeze="' . trim( $current_src ) . '" ', $img_match );
-
-          // Remove the current image source.
-          $img_match_new = preg_replace( '/(<img.+)(src=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $img_match_new );
-
-          preg_match( '/width=(?:"|\')(.+?)(?:"|\')/', $img_match, $width_value );
-          preg_match( '/height=(?:"|\')(.+?)(?:"|\')/', $img_match, $height_value );
-          $get_width  = ! empty( $width_value[1] ) ? $width_value[1] : '';
-          $get_height = ! empty( $height_value[1] ) ? $height_value[1] : '';
-
-          // Add placeholder image as source
-          $img_match_new = preg_replace( '/(<img\s+)/', '$1src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" ', $img_match_new );
-
-          // Fetch the current image CSS classes.
-          preg_match( '/class=(?:"|\')(.+?)(?:"|\')/', $img_match_new, $class_value );
-          $current_classes = ! empty( $class_value[1] ) ? $class_value[1] : '';
-
-          // Append breeze lazy-load CSS class.
-          if ( empty( trim( $current_classes ) ) ) {
-            $current_classes = 'br-lazy';
-          } else {
-            $current_classes .= ' br-lazy';
-          }
-
-          $img_match_new = preg_replace( '/(<img.+)(class=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $img_match_new );
-          // Add lazy-load CSS class.
-          $img_match_new = preg_replace( '/(<img\s+)/', '$1class="' . $current_classes . '" ', $img_match_new );
-
-          // handle SRCSET and SIZES attributes.
-          preg_match( '/srcset=(?:"|\')(.+?)(?:"|\')/', $img_match_new, $srcset_value );
-          preg_match( '/sizes=(?:"|\')(.+?)(?:"|\')/', $img_match_new, $sizes_value );
-          $srcset = ! empty( $srcset_value[1] ) ? $srcset_value[1] : '';
-          $sizes  = ! empty( $sizes_value[1] ) ? $sizes_value[1] : '';
-
-          if ( ! empty( $srcset ) ) {
-            $img_match_new = preg_replace( '/srcset=/i', 'data-brsrcset=', $img_match_new );
-          }
-
-          if ( ! empty( $sizes ) ) {
-            $img_match_new = preg_replace( '/sizes=/i', 'data-brsizes=', $img_match_new );
-          }
-
-          $content = str_replace( $img_match, $img_match_new, $content );
-        }
-      }
-    }
-    /**
-     * End of image processing
-     */
-
-
-     /**
-      * iframe processing
-      */
-    preg_match_all( '/<iframe[^>]+>/i', $content, $iframe_matches );
-    if ( ! empty( $iframe_matches[0] ) ) {
-      foreach ( $iframe_matches[0] as $iframe_match ) {
-        if(!preg_match('/\bloading\s*=\s*["\']eager["\']/i', $iframe_match)) {
-          preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $iframe_match, $src_value );
-          $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
-          // Add lazy-load data attribute.
-          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1data-breeze="' . trim( $current_src ) . '" ', $iframe_match );
-          // Remove the current image source.
-          $iframe_match_new = preg_replace( '/(<iframe.+)(src=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $iframe_match_new );
-          // Add placeholder image as source
-          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" ', $iframe_match_new );
-          
-          // Fetch the current image CSS classes.
-          preg_match( '/class=(?:"|\')(.+?)(?:"|\')/', $iframe_match_new, $class_value );
-          $current_classes = ! empty( $class_value[1] ) ? $class_value[1] : '';
-
-          // Append breeze lazy-load CSS class.
-          if ( empty( trim( $current_classes ) ) ) {
-            $current_classes = 'br-lazy';
-          } else {
-            $current_classes .= ' br-lazy';
-          }
-
-          $iframe_match_new = preg_replace( '/(<iframe.+)(class=(?:"|\').+?(?:"|\'))(.+?>)/', '$1$3', $iframe_match_new );
-          // Add lazy-load CSS class.
-          $iframe_match_new = preg_replace( '/(<iframe\s+)/', '$1class="' . $current_classes . '" ', $iframe_match_new );
-
-          $content = str_replace( $iframe_match, $iframe_match_new, $content );
-        }
-      }
-    }
-    /**
-     * end of iframe processing
-     */
-
-    return $content;
-  }
-
-
-  public function disable_wp_default_fetch_priority( $attributes ) {
-    unset($attributes['fetchpriority']);
-    return $attributes;
   }
 }

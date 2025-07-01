@@ -117,7 +117,6 @@ class GeneratorCLI extends \WP_CLI_Command {
       return false;
     }
     $token = $assoc_args['token'];
-    error_log( "APP WP GET TOKEN " . $token );
     $data = GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/appTokens.{$endpoint}" ),
       array(),
