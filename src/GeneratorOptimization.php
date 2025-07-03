@@ -24,7 +24,30 @@ class GeneratorOptimization {
     add_filter( "attachment_fields_to_save", array( $this, "media_settings_save" ), null, 2); 
     
     // breeze buffer cache process
-    add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ) );
+    add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ), 10, 2 );
+
+    // defer styles
+    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 10, 2 );
+  }
+
+  public function defer_styles( $tag, $handle ) {
+    if(is_user_logged_in()) {
+      return $tag;
+    }
+    
+    $tag = str_replace(
+      "media='all'",
+      "",
+      $tag
+    );
+
+    $tag = str_replace(
+      "rel='stylesheet'",
+      "rel='stylesheet' media='print' onload=\"this.onload=null;this.media='all';\"",
+      $tag
+    );
+    
+    return $tag;
   }
   
 
@@ -123,6 +146,15 @@ class GeneratorOptimization {
   private function attachment_fields() {
     return array(
       array(
+        "label" => "LCP: Disable Lazyload Media",
+        "name" => "adiosgenerator_disable_lazyload",
+        "options" => array(
+          "No" => "0",
+          "Yes" => "1"
+        ),
+        "helps" => __( 'If set, Make sure this attachment is in the ABOVE THE FOLD content.', 'adiosgenerator' )
+      ),
+      array(
         "label" => "LCP: Prioritize Background Image",
         "name" => "adiosgenerator_prioritize_background",
         "options" => array(
@@ -179,6 +211,7 @@ class GeneratorOptimization {
   
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
+    $buffer = $this->breeze_cache_nolazyload( $buffer );
     $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
     return $buffer;
   }
@@ -217,7 +250,14 @@ class GeneratorOptimization {
       }
 
       $href = $this->cdn_url( $prel->guid );
-      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} /> ";
+
+      $srcset = wp_get_attachment_image_srcset( $prel->ID, "full" );
+      $srcset = $srcset ? " srcset=\"{$srcset}\"" : "";
+
+      $sizes  = wp_get_attachment_image_sizes( $prel->ID, 'full' );
+      $sizes = $sizes ? " sizes=\"{$sizes}\"" : "";
+
+      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcset} {$sizes} /> ";
     }
 
     // insert priorities in head tag
@@ -233,7 +273,69 @@ class GeneratorOptimization {
       $cdn_url = \Breeze_Options_Reader::get_option_value( 'cdn-url' );
       return str_replace($site_url . '/wp-content/', $cdn_url . '/wp-content/', $url);
     }
-
     return $url;
+  }
+
+  public function breeze_cache_nolazyload( $html ) {
+    $content = $html;
+    $excludes = get_posts(array(
+      "post_type" => "attachment",
+      "posts_per_page" => -1,
+      "meta_key" => "adiosgenerator_disable_lazyload",
+      "meta_value" => 1,
+      "compare" => "="
+    ));
+
+    $srcs = array();
+    foreach( $excludes as $exl ) {
+      $excludeURL = $this->cdn_url($exl->guid);
+      $srcs[] = $this->cdn_url($exl->guid);
+    }
+
+    preg_match_all( '/<img[^>]+>/i', $content, $img_matches );
+
+    $img_matches[0] = array_filter(
+      $img_matches[0],
+      function ( $tag ) {
+        return strpos( $tag, '\\' ) === false;
+      }
+    );
+
+    if ( ! empty( $img_matches[0] ) ) {
+      foreach ( $img_matches[0] as $img_match ) {
+        preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $img_match, $src_value );
+        $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
+
+        preg_match('/alt=["\']([^"\']*)["\']/', $img_match, $alt_match);
+        $alt = isset($alt_match[1]) ? $alt_match[1] : '';
+
+        preg_match('/title=["\']([^"\']*)["\']/', $img_match, $title_match);
+        $alt = empty( $alt ) && isset($title_match[1]) ? $title_match[1] : $alt;
+
+        preg_match('/width=["\']([^"\']*)["\']/', $img_match, $width_match);
+        $width = isset($width_match[1]) ? $width_match[1] : '';
+
+        preg_match('/width=["\']([^"\']*)["\']/', $img_match, $height_match);
+        $height = isset($height_match[1]) ? $height_match[1] : '';
+
+        if( true === in_array( $current_src, $srcs ) ) {
+          $img_match_new = preg_replace( '/<img\s/i', '<img data-no-lazy="1" ', $img_match, 1 );
+          $img_match_new = preg_replace('/\sloading=("|\')[^"\']*("|\')/i', '', $img_match_new);
+          // empty alt
+          if (preg_match('/<img[^>]*\salt=["\']\s*["\'][^>]*>/i', $img_match_new)) {
+            $img_match_new = preg_replace('/\salt=["\'][^"\']*["\']/i', ' alt="' . esc_attr( $alt ) . '" ', $img_match_new);
+          }
+
+          $content = str_replace( $img_match, $img_match_new, $content );
+        } else {
+          $img_match_new = preg_replace('/\salt=["\'][^"\']*["\']/i', ' alt="' . esc_attr( $alt ) . '" ', $img_match);
+          $img_match_new = $img_match_new . '<noscript><img data-no-lazy="1" src="' . esc_url($current_src) . '" alt="' . esc_attr( $alt ) . '" width="' . esc_attr( $width ) . '"  height="' . esc_attr( $height ) . '" /></noscript>';
+          $content = str_replace( $img_match, $img_match_new, $content );
+        }
+        
+      }
+    }
+
+    return $content;
   }
 }

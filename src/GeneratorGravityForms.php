@@ -15,6 +15,7 @@ class GeneratorGravityForms {
   public function init() {
     add_filter( 'gform_submit_button', array( $this, "divi_css_class_button" ), 10, 2 );
     add_action( 'get_footer', array( $this, "divi_gravity_form_theme" ) );
+    add_filter( 'gform_init_scripts_footer', '__return_true' );
   }
   
   public function divi_css_class_button( $button, $form ) {

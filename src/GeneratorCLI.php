@@ -89,7 +89,6 @@ class GeneratorCLI extends \WP_CLI_Command {
   }
 
 
-
   /**
    * Pulls data sync for templates
    */

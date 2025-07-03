@@ -3,7 +3,7 @@
         'name' => 'adiosgenerator/webgenerator',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '31bcdac221f0cad869695e3006804c9b17eb54f8',
+        'reference' => '1b6be7921a8f030ffe0478e0703aa6bad7e9a424',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'adiosgenerator/webgenerator' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '31bcdac221f0cad869695e3006804c9b17eb54f8',
+            'reference' => '1b6be7921a8f030ffe0478e0703aa6bad7e9a424',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
