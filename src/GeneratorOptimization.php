@@ -27,27 +27,40 @@ class GeneratorOptimization {
     add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ), 10, 2 );
 
     // defer styles
-    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 10, 2 );
+    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 100, 2 );
+  }
+
+  public function defer_style_setter( $link ) {
+    return '<link href="' . esc_url($link) . '"  rel="preload" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" />';
   }
 
   public function defer_styles( $tag, $handle ) {
     if(is_user_logged_in()) {
       return $tag;
     }
-    
-    $tag = str_replace(
-      "media='all'",
-      "",
-      $tag
-    );
-
-    $tag = str_replace(
-      "rel='stylesheet'",
-      "rel='stylesheet' media='print' onload=\"this.onload=null;this.media='all';\"",
-      $tag
-    );
-    
+    preg_match("/href=['\"]([^'\"]+)['\"]/", $tag, $matches);
+    if (!empty($matches[1])) {
+      $tag = $this->defer_style_setter( $matches[1] );
+    }
     return $tag;
+  }
+
+  // if not handled by style_loader_tag then modify the buffer
+  public function defer_css_style_assets( $buffer ) {
+    $buffer = preg_replace_callback(
+        '/<link\s+[^>]*rel=["\']stylesheet["\'][^>]*>/i',
+        function($matches) {
+            $original_tag = $matches[0];
+            if (preg_match('/href=["\']([^"\']+)["\']/', $original_tag, $href_match)) {
+                $href = $href_match[1];
+                $new_tag = $this->defer_style_setter( $href );
+                return $new_tag;
+            }
+            return $original_tag;
+        },
+        $html
+    );
+    return $buffer;
   }
   
 
@@ -212,6 +225,7 @@ class GeneratorOptimization {
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->breeze_cache_nolazyload( $buffer );
+    $buffer = $this->defer_css_style_assets( $buffer );
     $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
     return $buffer;
   }
@@ -259,8 +273,6 @@ class GeneratorOptimization {
 
       $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcset} {$sizes} /> ";
     }
-
-    $preload_lists .= " <link rel=\"preload\" href=\"" . get_template_directory_uri() . "/core/admin/fonts/modules/all/modules.woff" . "\" as=\"font\" type=\"font/woff\" crossorigin=\"anonymous\"> ";
 
     // insert priorities in head tag
     $content = str_replace( "</head>", $preload_lists . "</head>", $content );
