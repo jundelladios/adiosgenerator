@@ -150,7 +150,7 @@ class GeneratorOptimization {
         "helps" => __( 'If set, Make sure this attachment is in the ABOVE THE FOLD content.', 'adiosgenerator' )
       ),
       array(
-        "label" => "LCP: Prioritize Background Image",
+        "label" => "LCP: Preload Image",
         "name" => "adiosgenerator_prioritize_background",
         "options" => array(
           "No" => "0",
@@ -165,7 +165,16 @@ class GeneratorOptimization {
           "Mobile - Neutral" => "9"
         ),
         "helps" => __( "If set, Make sure this attachment is in the ABOVE THE FOLD content. (High for backgrounds, Low for sliders, Neutral undecided as long this image has been prioritized)", 'adiosgenerator' )
-      )
+      ),
+      array(
+        "label" => "LCP: Preload with SRCSETs",
+        "name" => "adiosgenerator_preload_srcset",
+        "options" => array(
+          "No" => "0",
+          "Yes" => "1"
+        ),
+        "helps" => __( 'If preload is using img tag and sercset, enable this.', 'adiosgenerator' )
+      ),
     );
   }
   
@@ -229,6 +238,7 @@ class GeneratorOptimization {
       $aspreload_as = isset( $preload_as[0] ) ? "as=\"{$preload_as[0]}\"" : "";
 
       $preload_type = get_post_meta($prel->ID, "adiosgenerator_prioritize_background", true);
+      $is_srcset = get_post_meta($prel->ID, "adiosgenerator_preload_srcset", true);
       $priority = "";
 
       if( in_array( $preload_type, array( "1", "3", "5" ) )) {
@@ -252,7 +262,9 @@ class GeneratorOptimization {
       $sizes  = wp_get_attachment_image_sizes( $prel->ID, 'full' );
       $sizes = $sizes ? " sizes=\"{$sizes}\"" : "";
 
-      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcset} {$sizes} /> ";
+      $srcsetsizes = $is_srcset ? " {$srcset} {$sizes} " : "";
+
+      $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcsetsizes} /> ";
     }
 
     // insert priorities in head tag
