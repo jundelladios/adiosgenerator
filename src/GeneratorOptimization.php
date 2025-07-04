@@ -35,12 +35,11 @@ class GeneratorOptimization {
   }
 
   public function defer_styles( $tag, $handle ) {
-    if(is_user_logged_in()) {
-      return $tag;
-    }
-    preg_match("/href=['\"]([^'\"]+)['\"]/", $tag, $matches);
-    if (!empty($matches[1])) {
-      $tag = $this->defer_style_setter( $matches[1] );
+    if( !is_user_logged_in() && ( is_page() || is_single() || is_category() || is_tag() || is_home() ) ) {
+      preg_match("/href=['\"]([^'\"]+)['\"]/", $tag, $matches);
+      if (!empty($matches[1])) {
+        $tag = $this->defer_style_setter( $matches[1] );
+      }
     }
     return $tag;
   }
