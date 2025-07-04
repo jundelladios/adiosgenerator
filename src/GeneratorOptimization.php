@@ -225,7 +225,7 @@ class GeneratorOptimization {
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->breeze_cache_nolazyload( $buffer );
-    $buffer = $this->defer_css_style_assets( $buffer );
+    // $buffer = $this->defer_css_style_assets( $buffer );
     $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
     return $buffer;
   }
