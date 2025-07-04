@@ -210,12 +210,6 @@ class GeneratorOptimization {
 
   
   public function breeze_cache_buffer_process( $buffer ) {
-    // replace divi fonts display from block to swap
-    $buffer = str_replace(
-      "display:block;",
-      "display:swap;",
-      $buffer
-    );
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->breeze_cache_nolazyload( $buffer );
     $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
@@ -265,6 +259,8 @@ class GeneratorOptimization {
 
       $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcset} {$sizes} /> ";
     }
+
+    $preload_lists .= " <link rel=\"preload\" href=\"" . get_template_directory_uri() . "/core/admin/fonts/modules/all/modules.woff" . "\" as=\"font\" type=\"font/woff\" crossorigin=\"anonymous\"> ";
 
     // insert priorities in head tag
     $content = str_replace( "</head>", $preload_lists . "</head>", $content );
