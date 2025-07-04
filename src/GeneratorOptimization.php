@@ -58,7 +58,7 @@ class GeneratorOptimization {
             }
             return $original_tag;
         },
-        $html
+        $buffer
     );
     return $buffer;
   }
