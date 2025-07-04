@@ -319,7 +319,7 @@ class GeneratorOptimization {
         $height = isset($height_match[1]) ? $height_match[1] : '';
 
         if( true === in_array( $current_src, $srcs ) ) {
-          $img_match_new = preg_replace( '/<img\s/i', '<img data-no-lazy="1" ', $img_match, 1 );
+          $img_match_new = preg_replace( '/<img\s/i', '<img data-no-lazy="1" data-cfasync="false" data-cf-no-optimize ', $img_match, 1 );
           $img_match_new = preg_replace('/\sloading=("|\')[^"\']*("|\')/i', '', $img_match_new);
           // empty alt
           if (preg_match('/<img[^>]*\salt=["\']\s*["\'][^>]*>/i', $img_match_new)) {
