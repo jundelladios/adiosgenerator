@@ -1,38 +1,57 @@
 <?php
 
 namespace WebGenerator;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-/**
- * 
- * WP Cli commands for adiosgenerator
- */
 class GeneratorAPI {
 
   private $endpoint;
   private $params = array();
   private $token = null;
 
+  /**
+   * Web generator api constructor
+   *
+   * @param string $endpoint
+   * @param mixed $params
+   * @param string $token optional
+   */
   public function __construct( $endpoint, $params, $token ) {
     $this->endpoint = $endpoint;
     $this->params = $params;
     $this->token = $token;
   }
 
-  // possibly use for another endpoint
+  /**
+   * Run api from web generator
+   *
+   * @param [type] $endpoint
+   * @param [type] $params
+   * @param [type] $token
+   * @return void
+   */
   public static function run( $endpoint, $params, $token=null ) {
     $instance = new static( $endpoint, $params, $token );
     return $instance->execute();
   }
 
-  // call this method if using web generator api
+  /**
+   * Web generator api endpoint
+   *
+   * @param string $endpoint
+   * @return string
+   */
   public static function generatorapi( $endpoint ) {
     return constant("ADIOSGENERATOR_API_URL") . $endpoint;
   }
 
+  /**
+   * Get and request authorization token from web generator
+   *
+   * @return string
+   */
   private function getToken() {
     if( !defined('DIVA_LAUNCH_APIKEY') ) {
       return null;
@@ -41,6 +60,7 @@ class GeneratorAPI {
     if( !$apiKey ) return null;
 
     $apiParams = array(
+      'timeout' => 86400,
       'headers' => array(
         'Content-Type' => 'application/json',
         'Accept' => 'application/json'
@@ -66,13 +86,18 @@ class GeneratorAPI {
     return $resp;
   }
 
-  // executing post method only.
+  /**
+   * Execute api
+   *
+   * @return void
+   */
   private function execute() {
     if( !$this->token ) {
       $this->token = $this->getToken();
     }
 
     $apiParams = array(
+      'timeout' => 86400,
       'headers' => array(
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
@@ -97,6 +122,12 @@ class GeneratorAPI {
     return $json;
   }
 
+  /**
+   * Get api response in trpc format
+   *
+   * @param [type] $data
+   * @return void
+   */
   public static function getResponse( $data ) {
     if(!isset($data->result->data->json)) { return null; }
     try {

@@ -1,17 +1,19 @@
 <?php
 
 namespace WebGenerator;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-/**
- * 
- * Class to handle contents replacements upon sync
- */
 class GeneratorProcessContent {
 
+  /**
+   * Replace google maps iframe address
+   *
+   * @param [type] $content
+   * @param [type] $address
+   * @return void
+   */
   public function replace_google_maps_iframe_address($content, $address) {
     return preg_replace_callback(
       '#(<iframe[^>]+src="[^"]*google\.com/maps/embed[^"]*?\?[^"]*?)q=([^"&]*)#i',
@@ -19,12 +21,4 @@ class GeneratorProcessContent {
       $content
     );
   }
-
-  public function get_social_items() {
-    if( class_exists( 'ET_Builder_Module_Social_Media_Follow_Item' )) {
-      return wp_send_json_success((new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
-    }
-    return wp_send_json_success([]);
-  }
-
 }

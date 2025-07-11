@@ -1,32 +1,22 @@
 <?php
 
 namespace WebGenerator;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-/**
- * 
- * Class to handle contents replacements upon sync
- */
+use WebGenerator\GeneratorUtilities;
+use WebGenerator\GeneratorAPI;
+use WebGenerator\GeneratorProcessContent;
+
 class GeneratorREST {
 
-  public function replace_google_maps_iframe_address($content, $address) {
-    return preg_replace_callback(
-      '#(<iframe[^>]+src="[^"]*google\.com/maps/embed[^"]*?\?[^"]*?)q=([^"&]*)#i',
-      fn($m) => $m[1] . 'q=' . urlencode($address),
-      $content
-    );
-  }
-
-  public function get_social_items() {
-    if( class_exists( 'ET_Builder_Module_Social_Media_Follow_Item' )) {
-      return wp_send_json_success((new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
-    }
-    return wp_send_json_success([]);
-  }
-
+  /**
+   * Authorize API if key is valid in web portal
+   *
+   * @param \WP_REST_Request $request
+   * @return void
+   */
   public function authorize( \WP_REST_Request $request ) {
     $headers = $request->get_headers();
     $auth = $headers['authorization'][0] ?? '';
@@ -37,6 +27,7 @@ class GeneratorREST {
 
     $token = trim($matches[1]);
     $apiParams = array(
+      'timeout' => 86400,
       'headers' => array(
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
@@ -56,10 +47,24 @@ class GeneratorREST {
     return true;
   }
 
-  public function sync_data( \WP_REST_Request $request ) {
-    $params = $request->get_json_params();
+
+  /**
+   * Get divi social media items lists
+   *
+   * @return void
+   */
+  public function get_social_items() {
+    if( class_exists( 'ET_Builder_Module_Social_Media_Follow_Item' )) {
+      return wp_send_json_success((new \ET_Builder_Module_Social_Media_Follow_Item)->get_fields());
+    }
+    return wp_send_json_success([]);
   }
 
+  /**
+   * Initialize api routes
+   *
+   * @return void
+   */
   public function routes() {
     add_action( "rest_api_init", function() {
       register_rest_route( 'adiosgenerator', 'get_social_items', array(

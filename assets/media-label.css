@@ -1,0 +1,22 @@
+.adiosgenerator_media_label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 5px;
+}
+
+.adiosgenerator_media_label_item {
+  text-align: left;
+  padding: 1px 5px;
+  color: #fff;
+  margin-bottom: 5px;
+  border-radius: 3px;
+}
+
+.adiosgenerator_media_label_lazyloaded {
+  background-color: #16a34a;
+}
+
+.adiosgenerator_media_label_preloaded {
+  background-color: #7c3aed;
+}

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
- * Version: 4.7.8
+ * Version: 5.0.0
  * Text Domain: adiosgenerator
  * Author: AD-IOS Digital Marketing Co.
  * Author URI: https://ad-ios.com/
@@ -21,6 +21,7 @@ use WebGenerator\GeneratorREST;
 use WebGenerator\GeneratorOptimization;
 use WebGenerator\GeneratorCache;
 use WebGenerator\GeneratorMime;
+use WebGenerator\GeneratorMedia;
 
 
 PucFactory::buildUpdateChecker(
@@ -39,6 +40,29 @@ if( file_exists( ABSPATH . 'wp-adiosgenerator-config.php' ) ) {
 	define("ADIOSGENERATOR_API_URL", "https://adios-webgenerator.com");
 	define("ADIOSGENERATOR_LOGOMAKER_URL", "https://adios-webgenerator.com");
 }
+
+// ensure plugin requires divi theme and activated
+add_action( 'plugins_loaded', 'adiosgenerator_plugin_check_dependencies' );
+function adiosgenerator_plugin_check_dependencies() {
+  $theme = wp_get_theme();
+  if ( !($theme->get( 'Name' ) === 'Divi' || $theme->get_template() === 'Divi') ) {
+    // auto deactivate plugin
+    deactivate_plugins( plugin_basename( __FILE__ ) );
+    // show notice
+    add_action( 'admin_notices', function () {
+      echo '
+        <div class="notice notice-error">
+          <p><strong>AD-IOS Web Generator:</strong> Divi Theme is required. Plugin deactivated.
+          </p>
+        </div>';
+    });
+    // prevent further loading
+    return;
+  }
+}
+
+// force support post thumbnails
+add_theme_support('post-thumbnails');
 
 // CLI
 if (defined('WP_CLI') && WP_CLI) {
@@ -71,3 +95,9 @@ add_action('plugins_loaded', "adiosgenerator_initialize_sso");
 
 // mimes
 (new GeneratorMime)->init();
+
+// media admin label
+(new GeneratorMedia)->init();
+
+// divi custom modules
+require_once constant('ADIOSGENERATOR_PLUGIN_DIR') . 'divi-extensions/divi-extensions.php';

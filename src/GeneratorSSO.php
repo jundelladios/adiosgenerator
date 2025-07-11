@@ -1,11 +1,11 @@
 <?php
 
 namespace WebGenerator;
-use WebGenerator\GeneratorAPI;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
+
+use WebGenerator\GeneratorAPI;
 
 class GeneratorSSO {
   
@@ -13,17 +13,37 @@ class GeneratorSSO {
   private $redirect;
   private $post;
 
+  /**
+   * SSO constructor
+   *
+   * @param string $token
+   * @param string $redirect
+   * @param int $post
+   */
   public function __construct( $token, $redirect, $post ) {
     $this->token = $token;
     $this->redirect = $redirect;
     $this->post = $post;
   }
 
+  /**
+   * Check if token exists
+   *
+   * @return void
+   */
   public function check() {
     if( !empty( $this->token ) ) { return true; }
     return false;
   }
 
+  /**
+   * Initialize sso after plugin loaded
+   *
+   * @param string $token
+   * @param string $redirect
+   * @param int $post
+   * @return void
+   */
   public static function init( $token, $redirect, $post ) {
     $instance = new static( $token, $redirect, $post );
     if($instance->check()) {
@@ -31,6 +51,11 @@ class GeneratorSSO {
     }
   }
 
+  /**
+   * Run sso
+   *
+   * @return void
+   */
   public function run() {
     try {
       $data = $this->getData();
@@ -45,6 +70,12 @@ class GeneratorSSO {
     }
   }
 
+  /**
+   * Handles session
+   *
+   * @param [type] $data
+   * @return void
+   */
   private function handleSession( $data ) {
     if( !$data ) { return false; }
 
@@ -70,6 +101,12 @@ class GeneratorSSO {
     $this->loginUser( $user );
   }
 
+  /**
+   * Execute auth user
+   *
+   * @param \WP_user $user
+   * @return void
+   */
   private function loginUser(\WP_user $user) {
     /**
      * Set WP User session
@@ -89,6 +126,12 @@ class GeneratorSSO {
     do_action('wp_login', $user->user_login, $user);
   }
 
+  /**
+   * handles redirect for sso
+   *
+   * @param mixed $data
+   * @return void
+   */
   private function redirect( $data ) {
     if( $data && !empty( $this->post ) && get_permalink( $this->post ) ) {
       wp_redirect( get_permalink( $this->post ) . "?et_fb=1&PageSpeed=off" );
@@ -103,7 +146,9 @@ class GeneratorSSO {
   }
 
   /**
-   * Fetch validate token from api
+   * Get the application data from wp generator portal
+   *
+   * @return void
    */
   private function getData() {
     $data = GeneratorAPI::run(

@@ -1,27 +1,20 @@
 <?php
 
 namespace WebGenerator;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct script access allowed!' );
 }
 
-/**
- * 
- * Class to handle contents replacements upon sync
- */
 class GeneratorOptimization {
 
+  /**
+   * Initialize optimization feature
+   *
+   * @return void
+   */
   public function init() {
-    add_action( 'wp_enqueue_scripts', array( $this, "remove_unecessary_styles" ), 100 );
-    remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
-    
     add_action( 'wp_head', array( $this, "divi_palletes_css_variables" ), 999 );
     add_action( 'wp_footer', array( $this, "divi_lazy_images" ), 999 );
-
-    // attachment optimization settings
-    add_filter( 'attachment_fields_to_edit',  array( $this, "media_settings" ), 10, 2 );
-    add_filter( "attachment_fields_to_save", array( $this, "media_settings_save" ), null, 2); 
     
     // breeze buffer cache process
     add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ), 10, 2 );
@@ -30,10 +23,23 @@ class GeneratorOptimization {
     add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 100, 2 );
   }
 
+  /**
+   * Defer css setter
+   *
+   * @param [type] $link
+   * @return void
+   */
   public function defer_style_setter( $link ) {
     return '<link href="' . esc_url($link) . '"  rel="preload" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" />';
   }
 
+  /**
+   * Handles defer style of css links
+   *
+   * @param string $tag
+   * @param string $handle
+   * @return void
+   */
   public function defer_styles( $tag, $handle ) {
     if( !is_user_logged_in() && ( is_page() || is_single() || is_category() || is_tag() || is_home() ) ) {
       preg_match("/href=['\"]([^'\"]+)['\"]/", $tag, $matches);
@@ -43,20 +49,11 @@ class GeneratorOptimization {
     }
     return $tag;
   }
-  
 
   /**
-   * remove guttenberg css this is not necessary
-   */
-  public function remove_unecessary_styles() {
-    wp_deregister_style( 'wc-blocks-style' );
-    wp_dequeue_style( 'wp-block-library' );
-    wp_dequeue_style( 'wp-block-library-theme' );
-    wp_dequeue_style( 'wc-blocks-style' );
-  }
-
-  /**
-   * check if optimization is enabled
+   * Check if optimization is applicable
+   *
+   * @return boolean
    */
   public function is_optimize() {
     include_once(ABSPATH . 'wp-includes/pluggable.php');
@@ -64,8 +61,9 @@ class GeneratorOptimization {
   }
 
   /**
-   * style variables and optimization
-   * ensure at the bottom to override previous styles of the head to avoid conflict
+   * Embed scripts and global styles in header
+   *
+   * @return void
    */
   public function divi_palletes_css_variables() {
     if( !function_exists( 'et_get_option' ) ) {
@@ -111,7 +109,12 @@ class GeneratorOptimization {
     echo $custom_css;
   }
 
-  // breeze divi lazybackground and images scripts
+
+  /**
+   * Lazyload backgrounds, sliders etc.
+   *
+   * @return void
+   */
   public function divi_lazy_images() {
     $custom_js = "<script type=\"text/javascript\" id=\"wp-generator-custom-js-optimization\">";
 
@@ -136,82 +139,13 @@ class GeneratorOptimization {
     $custom_js .= "</script>";
     echo $custom_js;
   }
-
-  private function attachment_fields() {
-    return array(
-      array(
-        "label" => "LCP: Disable Lazyload Media",
-        "name" => "adiosgenerator_disable_lazyload",
-        "options" => array(
-          "No" => "0",
-          "Yes" => "1"
-        ),
-        "helps" => __( 'If set, Make sure this attachment is in the ABOVE THE FOLD content.', 'adiosgenerator' )
-      ),
-      array(
-        "label" => "LCP: Preload Image",
-        "name" => "adiosgenerator_prioritize_background",
-        "options" => array(
-          "No" => "0",
-          "Desktop - High Priority" => "1",
-          "Desktop - Low Priority" => "2",
-          "Mobile - High Priority" => "3",
-          "Mobile - Low Priority" => "4",
-          "All Media - High Priority" => "5",
-          "All Media - Low Priority" => "6",
-          "Neutral" => "7",
-          "Desktop - Neutral" => "8",
-          "Mobile - Neutral" => "9"
-        ),
-        "helps" => __( "If set, Make sure this attachment is in the ABOVE THE FOLD content. (High for backgrounds, Low for sliders, Neutral undecided as long this image has been prioritized)", 'adiosgenerator' )
-      ),
-      array(
-        "label" => "LCP: Preload with SRCSETs",
-        "name" => "adiosgenerator_preload_srcset",
-        "options" => array(
-          "No" => "0",
-          "Yes" => "1"
-        ),
-        "helps" => __( 'If preload is using img tag and sercset, enable this.', 'adiosgenerator' )
-      ),
-    );
-  }
   
-  public function media_settings(  $form_fields, $post ) {
-    $fields = $this->attachment_fields();
-    foreach( $fields as $field ) {
-      $value = get_post_meta($post->ID, $field['name'], true);
-      
-      $attach = "attachments[{$post->ID}][{$field['name']}]";
-      $select = "<select name=\"{$attach}\" value=\"{$value}\">";
-      foreach( $field['options'] as $key => $opt ) {
-        $selected = $value == $opt ? "selected" : "";
-        $select .= "<option value=\"{$opt}\" {$selected}>{$key}</option>";
-      }
-      $select .= "<select>";
-
-      $form_fields[$field['name']] = array(
-        'label' => __( $field['label'], 'adiosgenerator' ),
-        'input' => 'html',
-        'html' => $select,
-        'value' => $value,
-        'helps' => $field['helps']
-      );
-    }
-
-    return $form_fields;
-  }
-
-  public function media_settings_save( $post, $attachment ) {
-    $fields = $this->attachment_fields();
-    foreach( $fields as $field ) {
-      $value = isset( $attachment[$field['name']] ) ? $attachment[$field['name']] : "0";
-      update_post_meta($post['ID'], $field['name'], $value);
-    }
-    return $post;
-  }
-
-  
+  /**
+   * Buffer cache from breeze
+   *
+   * @param string $buffer
+   * @return void
+   */
   public function breeze_cache_buffer_process( $buffer ) {
     $buffer = $this->process_preload_medias( $buffer );
     $buffer = $this->breeze_cache_nolazyload( $buffer );
@@ -219,6 +153,12 @@ class GeneratorOptimization {
     return $buffer;
   }
 
+  /**
+   * Processing media preload feature
+   *
+   * @param string $content
+   * @return void
+   */
   public function process_preload_medias( $content ) {
     
     // get prioritize urls
@@ -273,6 +213,12 @@ class GeneratorOptimization {
   }
 
 
+  /**
+   * Handle breeze cdn url not so important
+   *
+   * @param string $url
+   * @return void
+   */
   public function cdn_url( $url ) {
     if ( class_exists( 'Breeze_Options_Reader' ) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-active' )) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-url' ) ) ) {
       $site_url = get_site_url();
@@ -282,6 +228,12 @@ class GeneratorOptimization {
     return $url;
   }
 
+  /**
+   * Handles disabled lazyload medias
+   *
+   * @param string $html
+   * @return void
+   */
   public function breeze_cache_nolazyload( $html ) {
     $content = $html;
     $excludes = get_posts(array(
