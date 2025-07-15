@@ -106,6 +106,9 @@ class GeneratorAPI {
       'headers' => array(
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
+        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        'Pragma'        => 'no-cache',
+        'Expires'       => '0',
       ),
       'body' => json_encode(array(
         "json" => $this->params
