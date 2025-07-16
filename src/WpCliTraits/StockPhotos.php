@@ -89,12 +89,12 @@ trait StockPhotos {
       $aiImagesData = GeneratorAPI::getResponse( $aiImagesApi );
       if( count( $aiImagesData ) ) {
         foreach( $ret as $index => $image ) {
-          if( isset( $aiImagesData[$index] ) ) { continue; }
+          if( !isset( $aiImagesData[$index] ) ) { continue; }
           $pexelsPhoto = $aiImagesData[$index]->src->original."?fit=crop&w=".$image['width']."&h=" . $image['height'];
           $pexelsUrlPath = parse_url($aiImagesData[$index]->url, PHP_URL_PATH);
           $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
           $lastSegment = end($pexelsUrlPathSegments);
-          
+
           $photo = GeneratorUtilities::upload_file_by_url(
             $pexelsPhoto,
             sanitize_title( $aiImagesData[$index]->alt ),
@@ -127,7 +127,6 @@ trait StockPhotos {
           "numvids" => count( $retvids )
         )
       );
-
       
       $aiVideosData = GeneratorAPI::getResponse( $aiVideosApi );
       if( count( $aiVideosData ) ) {

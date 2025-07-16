@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
+use WebGenerator\GeneratorLogging;
 use ET_Core_PageResource;
 use WP_CLI;
 
@@ -18,27 +19,17 @@ trait AIGenerateContent {
     *
     * @param mixed $apidata
     * @param string $token
-    * @param string $pattern A valid regex pattern
     * @param int $postId
-    * @param integer $maxSnippet
-    * @param string $type
     * @return void
     */
-  private function ai_content_generate( $apidata, $token, $pattern, $postId, $maxSnippet = 20, $type = "sentence" ) {
+  private function ai_content_generate( $apidata, $token, $post ) {
 
     $retdata = $apidata->client;
-
-    $post = get_post( $postId );
     $content = $post->post_content;
 
-    preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
+    // preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
+    $excludeTemplateWords = $apidata->client->template->ex_ai_contents;
     $excludeWords = [
-      "contact",
-      "services",
-      "quicklinks",
-      "sitemap",
-      "get in touch",
-      "working hours",
       $retdata->site_name,
       $retdata->slogan,
       $retdata->contact_number,
@@ -47,51 +38,95 @@ trait AIGenerateContent {
       $retdata->site_address,
       $retdata->insights
     ];
+    $excludeWords = array_merge( $excludeWords, $excludeTemplateWords );
 
-    $aiContentRequest = array();
-    $replaceContents = array();
-    foreach( $matches as $key => $match ) {
+    $matchers = array();
+
+    // for paragraph contents
+    // match 2
+    preg_match_all('/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $matchParagraphs, PREG_SET_ORDER);
+    foreach( $matchParagraphs as $match ) {
+      if( isset( $match[2])) {
+        $countWords = count(explode(" ", $match[2]));
+        $instruction = $countWords <= 5 ? "- Write a paragraph to be replaced with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n" : "- Write a paragraph with the max word of {$countWords} words. No break or new line, just one-line!\n";
+        $matchers[] = array(
+          "instructions" => $instruction,
+          "content" => $match[2]
+        );
+      }
+    }
+
+    // for heading tags contents
+    // match 2
+    preg_match_all('/<(h[2-6])\b[^>]*>(.*?)<\/\1>/is', $content, $matchesHeadings, PREG_SET_ORDER);
+    foreach( $matchesHeadings as $match ) {
+      if( isset( $match[2])) {
+        $countWords = count(explode(" ", $match[2]));
+        $matchers[] = array(
+          "instructions" => "- Write a title for replacement with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n",
+          "content" => $match[2]
+        );
+      }
+    }
+
+    // for title heading attributes contents
+    // match 1
+    preg_match_all('/\b(title|heading)="([^"]*)"/is', $content, $matchesAttributes, PREG_SET_ORDER);
+    foreach( $matchesAttributes as $match ) {
+      if( isset( $match[2])) {
+        $countWords = count(explode(" ", $match[2]));
+        $matchers[] = array(
+          "instructions" => "- Write a title for replacement with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n",
+          "content" => $match[2]
+        );
+      }
+    }
+
+    $finalizeMatchers = array();
+    foreach( $matchers as $match ) {
       $matchExclude = false;
+
       foreach ($excludeWords as $needle) {
-        if (isset($match[2]) && stripos($match[2], $needle) !== false) {
+        if (stripos($match['content'], $needle) !== false) {
           $matchExclude = true;
           break;
         }
       }
 
-      if( isset( $match[2]) && !empty( $match[2]) && !$matchExclude ) {
-        $countWords = count(explode(" ", $match[2]));
-        $countWords = $countWords > $maxSnippet ? $maxSnippet : $countWords;
-        $type = $countWords < 3 ? "heading title" : $type;
-        $aiContentRequest[] = "Write a blog {$type} with the max amount of {$countWords} words.";
-        $replaceContents[] = $match[2];
-      }
+      if( $matchExclude ) { continue; }
+      $finalizeMatchers[] = $match;
     }
+
+    if( !count( $finalizeMatchers )) { return false; }
+    
+    $replace_contents = array_column( $finalizeMatchers, "content" );
+    $instructions = array_column( $finalizeMatchers, "instructions" );
+    $instructions_text = implode("", $instructions);
 
     $contents = GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
       array(
-        "instructions" => json_encode( $aiContentRequest ),
-        "max" => count( $aiContentRequest ),
-        "maxtext" => $maxSnippet
+        "instructions" => $instructions_text,
+        "max" => count( $instructions )
       ),
       $token
     );
+
     $apidata = GeneratorAPI::getResponse( $contents );
     $snippetContents = $apidata->snippets;
 
-    foreach( $replaceContents as $key => $rpcontent ) {
+    foreach( $replace_contents as $key => $rpcontent ) {
       if( isset( $snippetContents[$key] ) ) {
         $content = str_replace( $rpcontent, $snippetContents[$key], $content );
       }
     }
-    
+
     wp_update_post([
-      'ID' => $postId,
+      'ID' => $post->ID,
       'post_content' => $content
     ]);
 
-    ET_Core_PageResource::do_remove_static_resources( $postId, 'all' );
+    ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
   }
 
    /**
@@ -112,30 +147,14 @@ trait AIGenerateContent {
       'post_type' => array(
         "page",
         "post",
-        "project"
+        "project",
+        "et_footer_layout",
+        "et_body_layout",
       )
     ));
 
     foreach( $posts as $post ) {
-      $this->ai_content_generate(
-        $apidata,
-        $token,
-        '/<(p)\b[^>]*>(.*?)<\/\1>/is',
-        $post->ID,
-        350
-      );
-
-      // replace headings except h1 because h1 used to be the site name by default or internal pages title
-      $this->ai_content_generate(
-        $apidata,
-        $token,
-        '/<(h[2-6])\b[^>]*>(.*?)<\/\1>|\\b(title|heading)="([^"]*)"/is',
-        $post->ID,
-        30,
-        "heading title"
-      );
-
-      ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
+      $this->ai_content_generate( $apidata, $token, $post);
     }
   }
 }
