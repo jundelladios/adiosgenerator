@@ -92,6 +92,14 @@ class GeneratorAdminBar {
         'title'  => 'Security Fixes',
         'href'   =>  $this->generate_action_url( 'diva_security_fixes' )
     ]);
+
+    // flush permalinks
+    $admin_bar->add_node([
+        'id'     => 'diva_generator_menu_flush_permalinks',
+        'parent' => 'diva_generator_menu',
+        'title'  => 'Flush Permalinks',
+        'href'   =>  $this->generate_action_url( 'diva_flush_permalinks' )
+    ]);
   }
 
 
@@ -128,6 +136,12 @@ class GeneratorAdminBar {
       $this->redirect_action( 'diva_security_fixes' );
       exit;
     }
+
+    if( $this->validate_action( 'diva_flush_permalinks' ) ) {
+      flush_rewrite_rules();
+      $this->redirect_action( 'diva_flush_permalinks' );
+      exit;
+    }
   }
 
   private function display_action_message( $action, $message ) {
@@ -147,5 +161,6 @@ class GeneratorAdminBar {
     $this->display_action_message( "diva_force_update", "Application has been updated!" );
     $this->display_action_message( "diva_php_recommendations", "PHP recommendations has been applied!" );
     $this->display_action_message( "diva_security_fixes", "Security Fixes has been applied! Please refresh this app." );
+    $this->display_action_message( "diva_flush_permalinks", "Permalinks has been flushed!" );
   }
 }
