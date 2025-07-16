@@ -63,7 +63,7 @@ trait AIGenerateContent {
         $countWords = count(explode(" ", $match[2]));
         $countWords = $countWords > $maxSnippet ? $maxSnippet : $countWords;
         $type = $countWords < 3 ? "heading title" : $type;
-        $aiContentRequest[] = "Write a blog {$type} with the max amount of {$countWords} words — not fewer, not more. It must a proper casing.";
+        $aiContentRequest[] = "Write a blog {$type} with the max amount of {$countWords} words.";
         $replaceContents[] = $match[2];
       }
     }
