@@ -16,6 +16,16 @@ trait ServicesPages {
     if( !$apidata ) return;
 
     $client = $apidata->client;
+
+    // remove all published dummy services
+    $publishedServices = get_posts( array(
+      'post_type' => 'diva_services',
+      'post_status' => 'publish',
+      'numberposts' => -1
+    ));
+    foreach( $publishedServices as $service ) {
+      wp_delete_post( $service->ID, true );
+    }
     
     $firstDraftSpage = get_posts( array(
       'post_type' => 'diva_services',

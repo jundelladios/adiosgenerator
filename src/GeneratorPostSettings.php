@@ -55,8 +55,7 @@ class GeneratorPostSettings {
    */
   public function add_custom_post_row_action( $actions, $post ) {
     if (current_user_can('edit_posts') && in_array($post->post_type, get_post_types(['public' => true], 'names'))) {
-      $custom_link = '<a href="' . GeneratorAdminActions::generate_action_url('diva_duplicate_post') . "&diva_post_id={$post->ID}" . '">Duplicate</a>';
-      $actions['diva_duplicate'] = '<a href="' . esc_url($custom_link) . '" title="Duplicate this item" rel="permalink">Duplicate</a>';
+      $actions['diva_duplicate'] = '<a href="' . esc_url(GeneratorAdminActions::generate_action_url('diva_duplicate_post') . "&diva_post_id={$post->ID}") . '" title="Duplicate this item" rel="permalink">Duplicate</a>';
     }
     return $actions;
   }
