@@ -15,8 +15,8 @@ trait SEOPages {
   private function process_post_seo( $token, $apidata, $post ) {
 
     $content = $post->post_content;
-    preg_match('/<p>(.*?)<\/p>/is', $content, $matches);
-    $seoContent = isset($matches[1]) ? $matches[1] : '';
+    preg_match('/<(p)\b[^>]*>(.*?)<\/p>/is', $content, $matches);
+    $seoContent = isset($matches[2]) ? $matches[2] : '';
     if( empty( $seoContent ) ) {
       return false;
     }

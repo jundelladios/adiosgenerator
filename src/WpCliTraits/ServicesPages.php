@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use WebGenerator\GeneratorUtilities;
 use WP_CLI;
+use ET_Core_PageResource;
 use WebGenerator\GeneratorLogging;
 
 trait ServicesPages {
@@ -65,6 +66,8 @@ trait ServicesPages {
           'ID' => $post->ID,
           'post_content' => $content
         ]);
+
+        ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
       }
     }
 

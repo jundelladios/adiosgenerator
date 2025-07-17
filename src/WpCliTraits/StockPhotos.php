@@ -9,6 +9,7 @@ use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
 use WP_CLI;
+use ET_Core_PageResource;
 
 trait StockPhotos {
 
@@ -118,6 +119,8 @@ trait StockPhotos {
             'ID' => $post->ID,
             'post_content' => $content
           ]);
+
+          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }
@@ -172,6 +175,8 @@ trait StockPhotos {
             'ID' => $post->ID,
             'post_content' => $content
           ]);
+
+          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }

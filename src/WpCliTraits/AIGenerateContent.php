@@ -9,6 +9,7 @@ use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
 use WebGenerator\GeneratorLogging;
+use ET_Core_PageResource;
 use WP_CLI;
 
 trait AIGenerateContent {
@@ -35,7 +36,22 @@ trait AIGenerateContent {
     $retdata = $apidata->client;
     $content = $post->post_content;
 
-    // preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
+    $firstHeading = null;
+
+    // trying to get first h1 tag
+    preg_match('/<(h1)\b[^>]*>(.*?)<\/h1>/is', $content, $h1match);
+    if( isset( $h1match[2] ) && !$firstHeading ) {
+      $firstHeading = $h1match[2];
+    }
+
+    // trying to get first title or heading attribute
+    preg_match('/\b(title|heading)="([^"]*)"/is', $content, $titleheadmatch);
+    if( isset( $titleheadmatch[2] ) && !$firstHeading ) {
+      $firstHeading = $titleheadmatch[2];
+    }
+
+
+
     $excludeTemplateWords = $apidata->client->template->ex_ai_contents;
     $excludeWords = [
       $retdata->site_name,
@@ -44,16 +60,17 @@ trait AIGenerateContent {
       $retdata->email_address,
       str_replace( " ", "+", $retdata->site_address ),
       $retdata->site_address,
-      $retdata->insights
+      $retdata->insights,
+      $firstHeading
     ];
 
     $excludeWords = array_merge( $excludeWords, $excludeTemplateWords );
+
     $matchers = array();
 
     $appendService = $post->post_type === "diva_services" ? " for this service ({$post->post_title})" : "";
 
     // for paragraph contents
-    // match 2
     preg_match_all('/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $matchParagraphs, PREG_SET_ORDER);
     foreach( $matchParagraphs as $match ) {
       if( isset( $match[2])) {
@@ -67,7 +84,6 @@ trait AIGenerateContent {
     }
 
     // for heading tags contents
-    // match 2
     preg_match_all('/<(h[2-6])\b[^>]*>(.*?)<\/\1>/is', $content, $matchesHeadings, PREG_SET_ORDER);
     foreach( $matchesHeadings as $match ) {
       if( isset( $match[2])) {
@@ -80,7 +96,6 @@ trait AIGenerateContent {
     }
 
     // for title heading attributes contents
-    // match 1
     preg_match_all('/\b(title|heading)="([^"]*)"/is', $content, $matchesAttributes, PREG_SET_ORDER);
     foreach( $matchesAttributes as $match ) {
       if( isset( $match[2]) && $match[2] !== "false") {
@@ -128,6 +143,8 @@ trait AIGenerateContent {
       'ID' => $post->ID,
       'post_content' => $content
     ]);
+
+    ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
   }
 
    /**
