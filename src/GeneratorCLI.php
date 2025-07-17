@@ -19,6 +19,8 @@ use WebGenerator\WpCliTraits\SiteFavicon;
 use WebGenerator\WpCliTraits\StockPhotos;
 use WebGenerator\WpCliTraits\ProcessContent;
 use WebGenerator\WpCliTraits\AIGenerateContent;
+use WebGenerator\WpCliTraits\ServicesPages;
+use WebGenerator\WpCliTraits\SEOPages;
 
 // WP Cli commands for adiosgenerator
 class GeneratorCLI extends WP_CLI_Command {
@@ -33,6 +35,8 @@ class GeneratorCLI extends WP_CLI_Command {
   use StockPhotos;
   use ProcessContent;
   use AIGenerateContent;
+  use ServicesPages;
+  use SEOPages;
 
   /**
    * Handles required parameter from cli's
@@ -90,6 +94,7 @@ class GeneratorCLI extends WP_CLI_Command {
         "page",
         "post",
         "project",
+        "diva_services",
         "et_body_layout",
         "et_footer_layout",
         "et_header_layout",

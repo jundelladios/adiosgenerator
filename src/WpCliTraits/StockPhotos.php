@@ -8,24 +8,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
-use ET_Core_PageResource;
 use WP_CLI;
 
 trait StockPhotos {
 
-   /**
-    * Replace post content and featured images into stock photos from pexels via web generator
-    *
-    * @param [type] $args
-    * @param [type] $assoc_args
-    * @return void
-    */
-  public function stockphotos( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
-    if( !$apidata ) return;
-    
-    $token = $assoc_args['token'];
-    $posts = $this->get_posts_content_generate();
+  /**
+   * Reusable code to handle content replacement from AI images
+   *
+   * @param string $token
+   * @param [type] $post
+   * @return void
+   */
+  private function post_stockphotos( $token, $apidata, $post ) {
+
+    $stockArgs = array();
+    if( $post->post_type == "diva_services") {
+      $stockArgs = array(
+        "specified" => $post->post_title,
+      );
+    }
 
     $logo = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo" ) );
     $logo2 = get_option( GeneratorUtilities::et_adiosgenerator_option( "logo_2" ) );
@@ -44,46 +45,45 @@ trait StockPhotos {
     
     $ret = array();
     $retvids = array();
-    foreach( $posts as $post ) {
-      $content = $post->post_content;
 
-      // image processing
-      preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(jpg|jpeg|png|webp|avif)/i', $post->post_content, $imgurls);
-      foreach( $imgurls[0] as $imgurl ) {
-        $urlpostid = attachment_url_to_postid( $imgurl );
-        if( $urlpostid && !in_array( $imgurl, $excludes ) ) {
-          $meta = wp_get_attachment_metadata( $urlpostid );
-          $ret[] = array(
-            "urlpostid" => $urlpostid,
-            "url" => $imgurl,
-            "width" =>$meta['width'] ?? 0,
-            "height" => $meta['height'] ?? 0,
-            "postId" => $post->ID
-          );
-        }
-      }
+    $content = $post->post_content;
 
-      // video processing
-      preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(mp4|mov|avi|mkv|flv|webm|wmv|3gp|ogv)/i', $post->post_content, $vidurls);
-      foreach( $vidurls[0] as $vidurl ) {
-        $urlpostid = attachment_url_to_postid( $vidurl );
-        $retvids[] = array(
+    // image processing
+    preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(jpg|jpeg|png|webp|avif)/i', $post->post_content, $imgurls);
+    foreach( $imgurls[0] as $imgurl ) {
+      $urlpostid = attachment_url_to_postid( $imgurl );
+      if( $urlpostid && !in_array( $imgurl, $excludes ) ) {
+        $meta = wp_get_attachment_metadata( $urlpostid );
+        $ret[] = array(
           "urlpostid" => $urlpostid,
-          "url" => $vidurl,
-          "postId" => $post->ID
+          "url" => $imgurl,
+          "width" =>$meta['width'] ?? 0,
+          "height" => $meta['height'] ?? 0
         );
       }
     }
 
+    // video processing
+    preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(mp4|mov|avi|mkv|flv|webm|wmv|3gp|ogv)/i', $post->post_content, $vidurls);
+    foreach( $vidurls[0] as $vidurl ) {
+      $urlpostid = attachment_url_to_postid( $vidurl );
+      $retvids[] = array(
+        "urlpostid" => $urlpostid,
+        "url" => $vidurl
+      );
+    }
 
+    // preparation for featured image
+    $featuredImage = null;
 
     // process images
     if( count( $ret ) ) {
       $aiImagesApi = GeneratorAPI::run(
         GeneratorAPI::generatorapi( "/api/trpc/openai.askstockphotos" ),
-        array(
-          "numimages" => count( $ret )
-        )
+        array_merge($stockArgs, array(
+          "number_request" => count( $ret )
+        )),
+        $token
       );
 
       $aiImagesData = GeneratorAPI::getResponse( $aiImagesApi );
@@ -102,7 +102,12 @@ trait StockPhotos {
           );
 
           if( !$photo ) { continue; }
-          $post = get_post( $image['postId'] );
+
+          // featured image first photo.
+          if( !$featuredImage ) {
+            $featuredImage = $photo;
+          }
+          
           $content = str_replace(
             $image['url'],
             wp_get_attachment_url( $photo ),
@@ -113,19 +118,24 @@ trait StockPhotos {
             'ID' => $post->ID,
             'post_content' => $content
           ]);
-
-          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }
+
+    // set featured image
+    if( $featuredImage ) {
+      set_post_thumbnail($post->ID, $featuredImage);
+    }
+
 
     // process videos if exists
     if( count( $retvids )) {
       $aiVideosApi = GeneratorAPI::run(
         GeneratorAPI::generatorapi( "/api/trpc/openai.askvideos" ),
-        array(
-          "numvids" => count( $retvids )
-        )
+        array_merge($stockArgs, array(
+          "number_request" => count( $retvids )
+        )),
+        $token
       );
       
       $aiVideosData = GeneratorAPI::getResponse( $aiVideosApi );
@@ -152,7 +162,6 @@ trait StockPhotos {
           );
 
           if( !$video ) { continue; }
-          $post = get_post( $vid['postId'] );
           $content = str_replace(
             $vid['url'],
             wp_get_attachment_url( $video ),
@@ -163,12 +172,29 @@ trait StockPhotos {
             'ID' => $post->ID,
             'post_content' => $content
           ]);
-
-          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }
+  }
 
+
+   /**
+    * Replace post content and featured images into stock photos from pexels via web generator
+    *
+    * @param [type] $args
+    * @param [type] $assoc_args
+    * @return void
+    */
+  public function stockphotos( $args, $assoc_args ) {
+    $apidata = $this->appWpTokenGet( $assoc_args );
+    if( !$apidata ) return;
+    
+    $token = $assoc_args['token'];
+
+    $posts = $this->get_posts_content_generate();
+    foreach( $posts as $post ) {
+      $this->post_stockphotos( $token, $apidata, $post );
+    }
 
     WP_CLI::success( __( 'Stock photos has been generated. ', 'adiosgenerator' ) );
   }

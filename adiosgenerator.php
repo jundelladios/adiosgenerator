@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
- * Version: 5.1.9
+ * Version: 5.2.10
  * Text Domain: adiosgenerator
  * Author: AD-IOS Digital Marketing Co.
  * Author URI: https://ad-ios.com/
@@ -24,6 +24,7 @@ use WebGenerator\GeneratorMime;
 use WebGenerator\GeneratorMedia;
 use WebGenerator\GeneratorAdminBar;
 use WebGenerator\GeneratorServicesPages;
+use WebGenerator\GeneratorPostSettings;
 
 
 PucFactory::buildUpdateChecker(
@@ -107,6 +108,9 @@ if( class_exists( 'Breeze_Options_Reader' ) ) {
 
 // services pages
 (new GeneratorServicesPages)->init();
+
+// post settings
+(new GeneratorPostSettings)->init();
 
 // divi custom modules
 require_once constant('ADIOSGENERATOR_PLUGIN_DIR') . 'divi-extensions/divi-extensions.php';

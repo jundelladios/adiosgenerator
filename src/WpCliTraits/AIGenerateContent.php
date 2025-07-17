@@ -9,7 +9,6 @@ use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
 use WebGenerator\GeneratorLogging;
-use ET_Core_PageResource;
 use WP_CLI;
 
 trait AIGenerateContent {
@@ -47,9 +46,11 @@ trait AIGenerateContent {
       $retdata->site_address,
       $retdata->insights
     ];
-    $excludeWords = array_merge( $excludeWords, $excludeTemplateWords );
 
+    $excludeWords = array_merge( $excludeWords, $excludeTemplateWords );
     $matchers = array();
+
+    $appendService = $post->post_type === "diva_services" ? " for this service ({$post->post_title})" : "";
 
     // for paragraph contents
     // match 2
@@ -57,8 +58,7 @@ trait AIGenerateContent {
     foreach( $matchParagraphs as $match ) {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
-        $instruction = $countWords <= 5 ? "- Write a paragraph to be replaced with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n" : "- Write a paragraph with the max word of {$countWords} words. No break or new line, just one-line!\n";
-        // GeneratorLogging::message( $instruction );
+        $instruction = $countWords <= 5 ? "- Write a relevant content {$appendService} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendService} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
         $matchers[] = array(
           "instructions" => $instruction,
           "content" => $match[2]
@@ -73,7 +73,7 @@ trait AIGenerateContent {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a title for replacement with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendService} to be replaced for this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
           "content" => $match[2]
         );
       }
@@ -86,7 +86,7 @@ trait AIGenerateContent {
       if( isset( $match[2]) && $match[2] !== "false") {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a title for replacement with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendService} to be replacement with this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
           "content" => $match[2]
         );
       }
@@ -98,42 +98,36 @@ trait AIGenerateContent {
     foreach( $matchers as $matcher ) {
       $isAllowedReplacement = $this->allowed_replace( $excludeWords, $matcher['content'] );
       if( $isAllowedReplacement ) {
-        GeneratorLogging::message( json_encode( $matcher ) . "\n\n" );
         $finalMatchers[] = $matcher;
       }
     }
     
-    // $replace_contents = array_column( $matchers, "content" );
-    // $instructions = array_column( $matchers, "instructions" );
-    // $instructions_text = implode("", $instructions);
+    $replace_contents = array_column( $finalMatchers, "content" );
+    $instructions = array_column( $finalMatchers, "instructions" );
+    $instructions_text = implode("", $instructions);
 
-    // $contents = GeneratorAPI::run(
-    //   GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
-    //   array(
-    //     "instructions" => $instructions_text,
-    //     "max" => count( $instructions )
-    //   ),
-    //   $token
-    // );
+    $contents = GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
+      array(
+        "instructions" => $instructions_text,
+        "max" => count( $instructions )
+      ),
+      $token
+    );
 
-    // $apidata = GeneratorAPI::getResponse( $contents );
-    // $snippetContents = $apidata->snippets;
+    $apidata = GeneratorAPI::getResponse( $contents );
+    $snippetContents = $apidata->snippets;
 
-    // foreach( $replace_contents as $key => $rpcontent ) {
-    //   // GeneratorLogging::message( "{$rpcontent}\n\n" );
-    //   $isAllowedReplacement = $this->allowed_replace( $excludeWords, $rpcontent );
-    //   if( isset( $snippetContents[$key] ) && $isAllowedReplacement ) {
-    //     GeneratorLogging::message( "{$rpcontent}\n\n" );
-    //     $content = str_replace( $rpcontent, $snippetContents[$key], $content );
-    //   }
-    // }
+    foreach( $replace_contents as $key => $rpcontent ) {
+      if( isset( $snippetContents[$key] ) ) {
+        $content = str_replace( $rpcontent, $snippetContents[$key], $content );
+      }
+    }
 
-    // wp_update_post([
-    //   'ID' => $post->ID,
-    //   'post_content' => $content
-    // ]);
-
-    // ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
+    wp_update_post([
+      'ID' => $post->ID,
+      'post_content' => $content
+    ]);
   }
 
    /**
@@ -155,13 +149,16 @@ trait AIGenerateContent {
         "page",
         "post",
         "project",
+        "diva_services",
         "et_footer_layout",
-        "et_body_layout",
+        "et_body_layout"
       )
     ));
 
     foreach( $posts as $post ) {
       $this->ai_content_generate( $apidata, $token, $post);
     }
+
+    WP_CLI::success( __( 'AI contents has been generated. ', 'adiosgenerator' ) );
   }
 }

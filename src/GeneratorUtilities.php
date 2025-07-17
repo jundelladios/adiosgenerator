@@ -175,7 +175,7 @@ class GeneratorUtilities {
    * @param string $status
    * @return void
    */
-  public static function duplicate_post( $id, $title="", $status="draft" ) {
+  public static function duplicate_post( $post_id, $title="", $status="draft" ) {
     $post = get_post($post_id);
     if (!$post) return false;
 
