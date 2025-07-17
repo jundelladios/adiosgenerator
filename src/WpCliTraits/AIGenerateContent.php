@@ -14,6 +14,15 @@ use WP_CLI;
 
 trait AIGenerateContent {
 
+  private function allowed_replace( $excludes, $paragraph ) {
+    foreach ($excludes as $word) {
+      if (stripos($paragraph, $word) !== false) {
+        return false;
+      }
+    }
+    return true;
+  }
+
    /**
     * Reusable code to handle content replacement from AI
     *
@@ -49,6 +58,7 @@ trait AIGenerateContent {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
         $instruction = $countWords <= 5 ? "- Write a paragraph to be replaced with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n" : "- Write a paragraph with the max word of {$countWords} words. No break or new line, just one-line!\n";
+        // GeneratorLogging::message( $instruction );
         $matchers[] = array(
           "instructions" => $instruction,
           "content" => $match[2]
@@ -73,7 +83,7 @@ trait AIGenerateContent {
     // match 1
     preg_match_all('/\b(title|heading)="([^"]*)"/is', $content, $matchesAttributes, PREG_SET_ORDER);
     foreach( $matchesAttributes as $match ) {
-      if( isset( $match[2])) {
+      if( isset( $match[2]) && $match[2] !== "false") {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
           "instructions" => "- Write a title for replacement with this content: \"{$match[2]}\", with the max word of {$countWords} words.\n",
@@ -82,51 +92,48 @@ trait AIGenerateContent {
       }
     }
 
-    $finalizeMatchers = array();
-    foreach( $matchers as $match ) {
-      $matchExclude = false;
+    if( !count( $matchers )) { return false; }
 
-      foreach ($excludeWords as $needle) {
-        if (stripos($match['content'], $needle) !== false) {
-          $matchExclude = true;
-          break;
-        }
+    $finalMatchers = array();
+    foreach( $matchers as $matcher ) {
+      $isAllowedReplacement = $this->allowed_replace( $excludeWords, $matcher['content'] );
+      if( $isAllowedReplacement ) {
+        GeneratorLogging::message( json_encode( $matcher ) . "\n\n" );
+        $finalMatchers[] = $matcher;
       }
-
-      if( $matchExclude ) { continue; }
-      $finalizeMatchers[] = $match;
     }
-
-    if( !count( $finalizeMatchers )) { return false; }
     
-    $replace_contents = array_column( $finalizeMatchers, "content" );
-    $instructions = array_column( $finalizeMatchers, "instructions" );
-    $instructions_text = implode("", $instructions);
+    // $replace_contents = array_column( $matchers, "content" );
+    // $instructions = array_column( $matchers, "instructions" );
+    // $instructions_text = implode("", $instructions);
 
-    $contents = GeneratorAPI::run(
-      GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
-      array(
-        "instructions" => $instructions_text,
-        "max" => count( $instructions )
-      ),
-      $token
-    );
+    // $contents = GeneratorAPI::run(
+    //   GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
+    //   array(
+    //     "instructions" => $instructions_text,
+    //     "max" => count( $instructions )
+    //   ),
+    //   $token
+    // );
 
-    $apidata = GeneratorAPI::getResponse( $contents );
-    $snippetContents = $apidata->snippets;
+    // $apidata = GeneratorAPI::getResponse( $contents );
+    // $snippetContents = $apidata->snippets;
 
-    foreach( $replace_contents as $key => $rpcontent ) {
-      if( isset( $snippetContents[$key] ) ) {
-        $content = str_replace( $rpcontent, $snippetContents[$key], $content );
-      }
-    }
+    // foreach( $replace_contents as $key => $rpcontent ) {
+    //   // GeneratorLogging::message( "{$rpcontent}\n\n" );
+    //   $isAllowedReplacement = $this->allowed_replace( $excludeWords, $rpcontent );
+    //   if( isset( $snippetContents[$key] ) && $isAllowedReplacement ) {
+    //     GeneratorLogging::message( "{$rpcontent}\n\n" );
+    //     $content = str_replace( $rpcontent, $snippetContents[$key], $content );
+    //   }
+    // }
 
-    wp_update_post([
-      'ID' => $post->ID,
-      'post_content' => $content
-    ]);
+    // wp_update_post([
+    //   'ID' => $post->ID,
+    //   'post_content' => $content
+    // ]);
 
-    ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
+    // ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
   }
 
    /**
