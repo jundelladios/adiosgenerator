@@ -9,6 +9,7 @@ use WebGenerator\GeneratorUtilities;
 use WP_CLI;
 use ET_Core_PageResource;
 use WebGenerator\GeneratorLogging;
+use WebGenerator\GeneratorCache;
 
 trait ServicesPages {
 
@@ -71,6 +72,7 @@ trait ServicesPages {
       }
     }
 
+    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'Services pages has been added!', 'adiosgenerator' ) );
 
   }
