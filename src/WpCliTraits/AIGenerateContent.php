@@ -28,13 +28,14 @@ trait AIGenerateContent {
     *
     * @param mixed $apidata
     * @param string $token
-    * @param int $postId
+    * @param int $post
     * @return void
     */
   private function ai_content_generate( $apidata, $token, $post ) {
 
     $retdata = $apidata->client;
     $content = $post->post_content;
+    $postId = $post->ID;
 
     $firstHeading = null;
 
@@ -121,7 +122,7 @@ trait AIGenerateContent {
     $instructions = array_column( $finalMatchers, "instructions" );
     $instructions_text = implode("", $instructions);
 
-    $contents = GeneratorAPI::run(
+    $aiContentsApi = GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
       array(
         "instructions" => $instructions_text,
@@ -130,7 +131,7 @@ trait AIGenerateContent {
       $token
     );
 
-    $apidata = GeneratorAPI::getResponse( $contents );
+    $apidata = GeneratorAPI::getResponse( $aiContentsApi );
     $snippetContents = $apidata->snippets;
 
     foreach( $replace_contents as $key => $rpcontent ) {
@@ -140,11 +141,12 @@ trait AIGenerateContent {
     }
 
     wp_update_post([
-      'ID' => $post->ID,
+      'ID' => $postId,
       'post_content' => $content
     ]);
 
-    ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
+    ET_Core_PageResource::do_remove_static_resources( $postId, 'all' );
+    ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
   }
 
    /**

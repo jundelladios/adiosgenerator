@@ -79,12 +79,10 @@ class GeneratorAPI {
 
     $request = wp_remote_post( self::generatorapi( "/api/trpc/appTokens.oauth" ), $apiParams);
     if( is_wp_error( $request )) {
-      GeneratorLogging::message( "DIVA API TOKEN ERROR RESPONSE: " . $request->get_error_message() );
       return false;
     }
 
     $body = wp_remote_retrieve_body( $request );
-    GeneratorLogging::message( "DIVA API TOKEN RESPONSE: $body " );
 
     $json = json_decode( $body );
     if( !$json ) { return false; }
@@ -122,12 +120,10 @@ class GeneratorAPI {
 
     $request = wp_remote_post( $this->endpoint, $apiParams);
     if( is_wp_error( $request )) {
-      GeneratorLogging::message( "DIVA API ERROR RESPONSE: " . $request->get_error_message() );
       return false;
     }
 
     $body = wp_remote_retrieve_body( $request );
-    GeneratorLogging::message( "DIVA API TOKEN RESPONSE: $body " );
 
     $json = json_decode( $body );
     if( !$json ) { return false; }

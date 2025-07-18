@@ -64,7 +64,7 @@ trait ServicesPages {
           $content
         );
         wp_update_post([
-          'ID' => $post->ID,
+          'ID' => $post_id,
           'post_content' => $content
         ]);
 
@@ -72,6 +72,7 @@ trait ServicesPages {
       }
     }
 
+    ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
     WP_CLI::success( __( 'Services pages has been added!', 'adiosgenerator' ) );
 
   }

@@ -196,11 +196,9 @@ trait StockPhotos {
     $token = $assoc_args['token'];
 
     $posts = $this->get_posts_content_generate();
-    // $posts =
-    // foreach( $posts as $post ) {
-    //   $this->post_stockphotos( $token, $apidata, $post );
-    // }
-    $this->post_stockphotos( $token, $apidata, get_post( 7 ) );
+    foreach( $posts as $post ) {
+      $this->post_stockphotos( $token, $apidata, $post );
+    }
 
     WP_CLI::success( __( 'Stock photos has been generated. ', 'adiosgenerator' ) );
   }
