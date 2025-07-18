@@ -89,10 +89,8 @@ add_action('plugins_loaded', "adiosgenerator_initialize_sso");
 // process content api
 (new GeneratorREST)->routes();
 
-if( class_exists( 'Breeze_Options_Reader' ) ) {
-  // optimization
-  (new GeneratorOptimization)->init();
-}
+// optimization
+(new GeneratorOptimization)->init();
 
 // caching
 (new GeneratorCache)->init();

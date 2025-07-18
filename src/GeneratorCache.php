@@ -56,7 +56,6 @@ class GeneratorCache {
       et_core_clear_wp_cache();
     }
     wp_cache_flush();
-    do_action( 'breeze_clear_all_cache' );
     self::cloudflare_clear();
   }
 }

@@ -38,7 +38,6 @@ trait SiteLogo {
         et_update_option( "divi_logo", wp_get_attachment_url( $logo ) );
       }
       // disable lazyload and lcp high prio
-      update_post_meta( $logo, "adiosgenerator_disable_lazyload", 1 );
       $posts = $this->get_posts_content_generate();
 
       foreach( $posts as $pst ) {

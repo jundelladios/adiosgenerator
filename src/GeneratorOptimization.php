@@ -13,14 +13,94 @@ class GeneratorOptimization {
    * @return void
    */
   public function init() {
-    add_action( 'wp_head', array( $this, "divi_palletes_css_variables" ), 999 );
-    add_action( 'wp_footer', array( $this, "divi_lazy_images" ), 999 );
     
-    // breeze buffer cache process
-    add_filter("breeze_cache_buffer_before_processing", array( $this, "breeze_cache_buffer_process" ), 10, 2 );
+    add_action( 'wp_head', array( $this, "divi_palletes_css_variables" ), 999 );
+    add_action( 'wp_head', array( $this, "process_preload_medias" ), 999 );
+
+    add_action( 'wp_enqueue_scripts', array( $this, 'lazybackgroundjs' ) );
+    
+    // buffer lazy process
+    add_action('the_content', array( $this, "disable_lazyload_for_images" ), 100, 20 );
 
     // defer styles
-    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 100, 2 );
+    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 100, 20 );
+  }
+
+  public function lazybackgroundjs() {
+    if( $this->is_optimize() ) {
+      wp_enqueue_script(
+        'adiosgenerator-lazybackground',
+        constant('ADIOSGENERATOR_PLUGIN_URI') . 'assets/lazybackground.js',
+        [ 'jquery' ],
+        null,
+        true
+      );
+    }
+  }
+
+
+  /**
+   * Disable lazyload on images
+   *
+   * @param string $content
+   * @return void
+   */
+  public function disable_lazyload_for_images( $content ) {
+    if( !$this->is_optimize() ) {
+      return $content;
+    }
+
+    // disable lazyload for specific images
+    $excludes = get_posts(array(
+      "post_type" => "attachment",
+      "posts_per_page" => -1,
+      "meta_key" => "adiosgenerator_disable_lazyload",
+      "meta_value" => 1,
+      "compare" => "="
+    ));
+
+    $excluded_urls  = array();
+    foreach( $excludes as $exl ) {
+      $excluded_urls[] = $exl->guid;
+    }
+
+    preg_match_all( '/<img[^>]+>/i', $content, $img_matches );
+
+    $img_matches[0] = array_filter(
+      $img_matches[0],
+      function ( $tag ) {
+        return strpos( $tag, '\\' ) === false;
+      }
+    );
+
+    if ( ! empty( $img_matches[0] ) ) {
+      foreach ( $img_matches[0] as $img_match ) {
+        preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $img_match, $src_value );
+        $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
+
+        preg_match('/alt=["\']([^"\']*)["\']/', $img_match, $alt_match);
+        $alt = isset($alt_match[1]) ? $alt_match[1] : '';
+
+        preg_match('/title=["\']([^"\']*)["\']/', $img_match, $title_match);
+        $alt = empty( $alt ) && isset($title_match[1]) ? $title_match[1] : $alt;
+
+        if( true === in_array( $current_src, $excluded_urls ) ) {
+          $img_match_new = preg_replace( '/<img\s/i', '<img data-no-lazy="1" data-cfasync="false" data-cf-no-optimize ', $img_match, 1 );
+          // remove loading attribute
+          $img_match_new = preg_replace('/\sloading=("|\')[^"\']*("|\')/i', '', $img_match_new);
+          // replace eager loading
+          $img_match_new = preg_replace( '/<img\s/i', '<img loading="eager" ', $img_match_new, 1 );
+          // empty alt
+          if (preg_match('/<img[^>]*\salt=["\']\s*["\'][^>]*>/i', $img_match_new)) {
+            $img_match_new = preg_replace('/\salt=["\'][^"\']*["\']/i', ' alt="' . esc_attr( $alt ) . '" ', $img_match_new);
+          }
+
+          $content = str_replace( $img_match, $img_match_new, $content );
+        }
+      }
+    }
+
+    return $content;
   }
 
   /**
@@ -66,9 +146,6 @@ class GeneratorOptimization {
    * @return void
    */
   public function divi_palletes_css_variables() {
-    if( !function_exists( 'et_get_option' ) ) {
-      return false;
-    }
 
     $accent_color = et_get_option( "accent_color" );
     $secondary_accent_color = et_get_option( "secondary_accent_color" );
@@ -92,12 +169,12 @@ class GeneratorOptimization {
     // css for lazy backgrounds
     if( $this->is_optimize()):
     $custom_css .= "
-    .et_pb_slider:not(.no-lazyload, .entered) .et_pb_slide,
+    .et_pb_slider:not(.loaded) .et_pb_slide,
     .et_pb_slider .et_pb_slide:not(.et-pb-active-slide), 
-    div.et_pb_section.et_pb_with_background:not(.no-lazyload, .entered),
-    div.et_pb_row.et_pb_with_background:not(.no-lazyload, .entered),
-    div.et_pb_column.et_pb_with_background:not(.no-lazyload, .entered),
-    div.et_pb_module.et_pb_with_background:not(.no-lazyload, .entered)
+    div.et_pb_section.et_pb_with_background:not(.loaded),
+    div.et_pb_row.et_pb_with_background:not(.loaded),
+    div.et_pb_column.et_pb_with_background:not(.loaded),
+    div.et_pb_module.et_pb_with_background:not(.loaded)
     {
     ";
     $custom_css .= "background-image: unset!important;";
@@ -109,57 +186,13 @@ class GeneratorOptimization {
     echo $custom_css;
   }
 
-
-  /**
-   * Lazyload backgrounds, sliders etc.
-   *
-   * @return void
-   */
-  public function divi_lazy_images() {
-    $custom_js = "<script type=\"text/javascript\" id=\"wp-generator-custom-js-optimization\">";
-
-    if( $this->is_optimize()):
-    $custom_js .= '
-    const AdiosGeneratorLazyLoadDiviBackgroundInstance = new LazyLoad({
-        elements_selector: ".et_pb_slider, .et_pb_with_background",
-        threshold: 300
-    });
-    
-    const AdiosGeneratorLazyloadImagesInstance = new LazyLoad({
-        elements_selector: ".br-lazy",
-        data_src: "breeze",
-        data_srcset: "brsrcset",
-        data_sizes: "brsizes",
-        class_loaded: "br-loaded",
-        threshold: 300
-    });
-    ';
-    endif;
-
-    $custom_js .= "</script>";
-    echo $custom_js;
-  }
-  
-  /**
-   * Buffer cache from breeze
-   *
-   * @param string $buffer
-   * @return void
-   */
-  public function breeze_cache_buffer_process( $buffer ) {
-    $buffer = $this->process_preload_medias( $buffer );
-    $buffer = $this->breeze_cache_nolazyload( $buffer );
-    $buffer = apply_filters( 'breeze_cdn_content_return', $buffer );
-    return $buffer;
-  }
-
   /**
    * Processing media preload feature
    *
    * @param string $content
    * @return void
    */
-  public function process_preload_medias( $content ) {
+  public function process_preload_medias() {
     
     // get prioritize urls
     $preloads = get_posts(array(
@@ -193,7 +226,7 @@ class GeneratorOptimization {
         $priority .= " media=\"(max-width: 768px)\" ";
       }
 
-      $href = $this->cdn_url( $prel->guid );
+      $href = $prel->guid;
 
       $srcset = wp_get_attachment_image_srcset( $prel->ID, "full" );
       $srcset = $srcset ? " srcset=\"{$srcset}\"" : "";
@@ -206,94 +239,6 @@ class GeneratorOptimization {
       $preload_lists .= " <link rel=\"preload\" {$aspreload_as} href=\"{$href}\" type=\"{$mime}\" {$priority} {$srcsetsizes} /> ";
     }
 
-    // insert priorities in head tag
-    $content = str_replace( "</head>", $preload_lists . "</head>", $content );
-
-    return $content;
-  }
-
-
-  /**
-   * Handle breeze cdn url not so important
-   *
-   * @param string $url
-   * @return void
-   */
-  public function cdn_url( $url ) {
-    if ( class_exists( 'Breeze_Options_Reader' ) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-active' )) && !empty( \Breeze_Options_Reader::get_option_value( 'cdn-url' ) ) ) {
-      $site_url = get_site_url();
-      $cdn_url = \Breeze_Options_Reader::get_option_value( 'cdn-url' );
-      return str_replace($site_url . '/wp-content/', $cdn_url . '/wp-content/', $url);
-    }
-    return $url;
-  }
-
-  /**
-   * Handles disabled lazyload medias
-   *
-   * @param string $html
-   * @return void
-   */
-  public function breeze_cache_nolazyload( $html ) {
-    $content = $html;
-    $excludes = get_posts(array(
-      "post_type" => "attachment",
-      "posts_per_page" => -1,
-      "meta_key" => "adiosgenerator_disable_lazyload",
-      "meta_value" => 1,
-      "compare" => "="
-    ));
-
-    $srcs = array();
-    foreach( $excludes as $exl ) {
-      $excludeURL = $this->cdn_url($exl->guid);
-      $srcs[] = $this->cdn_url($exl->guid);
-    }
-
-    preg_match_all( '/<img[^>]+>/i', $content, $img_matches );
-
-    $img_matches[0] = array_filter(
-      $img_matches[0],
-      function ( $tag ) {
-        return strpos( $tag, '\\' ) === false;
-      }
-    );
-
-    if ( ! empty( $img_matches[0] ) ) {
-      foreach ( $img_matches[0] as $img_match ) {
-        preg_match( '/src=(?:"|\')(.+?)(?:"|\')/', $img_match, $src_value );
-        $current_src = ! empty( $src_value[1] ) ? $src_value[1] : '';
-
-        preg_match('/alt=["\']([^"\']*)["\']/', $img_match, $alt_match);
-        $alt = isset($alt_match[1]) ? $alt_match[1] : '';
-
-        preg_match('/title=["\']([^"\']*)["\']/', $img_match, $title_match);
-        $alt = empty( $alt ) && isset($title_match[1]) ? $title_match[1] : $alt;
-
-        preg_match('/width=["\']([^"\']*)["\']/', $img_match, $width_match);
-        $width = isset($width_match[1]) ? $width_match[1] : '';
-
-        preg_match('/width=["\']([^"\']*)["\']/', $img_match, $height_match);
-        $height = isset($height_match[1]) ? $height_match[1] : '';
-
-        if( true === in_array( $current_src, $srcs ) ) {
-          $img_match_new = preg_replace( '/<img\s/i', '<img data-no-lazy="1" data-cfasync="false" data-cf-no-optimize ', $img_match, 1 );
-          $img_match_new = preg_replace('/\sloading=("|\')[^"\']*("|\')/i', '', $img_match_new);
-          // empty alt
-          if (preg_match('/<img[^>]*\salt=["\']\s*["\'][^>]*>/i', $img_match_new)) {
-            $img_match_new = preg_replace('/\salt=["\'][^"\']*["\']/i', ' alt="' . esc_attr( $alt ) . '" ', $img_match_new);
-          }
-
-          $content = str_replace( $img_match, $img_match_new, $content );
-        } else {
-          $img_match_new = preg_replace('/\salt=["\'][^"\']*["\']/i', ' alt="' . esc_attr( $alt ) . '" ', $img_match);
-          $img_match_new = $img_match_new . '<noscript><img data-no-lazy="1" src="' . esc_url($current_src) . '" alt="' . esc_attr( $alt ) . '" width="' . esc_attr( $width ) . '"  height="' . esc_attr( $height ) . '" /></noscript>';
-          $content = str_replace( $img_match, $img_match_new, $content );
-        }
-        
-      }
-    }
-
-    return $content;
+    echo $preload_lists;
   }
 }
