@@ -31,8 +31,8 @@ trait SEOPages {
     );
 
     $apidata = GeneratorAPI::getResponse( $apiseo );
-    update_post_meta( $front_page_id, '_wds_metadesc', $apidata->seo_description );
-    update_post_meta( $front_page_id, '_wds_focus-keywords', implode( ",", $apidata->seo_keywords ) );
+    update_post_meta( $post->ID, '_wds_metadesc', $apidata->seo_description );
+    update_post_meta( $post->ID, '_wds_focus-keywords', implode( ",", $apidata->seo_keywords ) );
   }
 
   public function process_seo_pages( $args, $assoc_args ) {

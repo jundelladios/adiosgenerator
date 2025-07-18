@@ -68,14 +68,14 @@ trait AIGenerateContent {
 
     $matchers = array();
 
-    $appendService = $post->post_type === "diva_services" ? " for this service ({$post->post_title})" : "";
+    $appendTitle =" for this page ({$post->post_title})";
 
     // for paragraph contents
     preg_match_all('/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $matchParagraphs, PREG_SET_ORDER);
     foreach( $matchParagraphs as $match ) {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
-        $instruction = $countWords <= 5 ? "- Write a relevant content {$appendService} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendService} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
+        $instruction = $countWords <= 5 ? "- Write a relevant content {$appendTitle} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendTitle} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
         $matchers[] = array(
           "instructions" => $instruction,
           "content" => $match[2]
@@ -89,7 +89,7 @@ trait AIGenerateContent {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendService} to be replaced for this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendTitle} to be replaced for this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
           "content" => $match[2]
         );
       }
@@ -101,7 +101,7 @@ trait AIGenerateContent {
       if( isset( $match[2]) && $match[2] !== "false") {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendService} to be replacement with this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendTitle} to be replacement with this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
           "content" => $match[2]
         );
       }
