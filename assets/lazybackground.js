@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Select all elements with the lazy-background class
-    const lazyBackgrounds = document.querySelectorAll('.et_pb_slider, .et_pb_with_background');
+    const lazyBackgrounds = document.querySelectorAll('.et_pb_section');
 
     // Intersection Observer to detect when the element is in the viewport
     const observer = new IntersectionObserver((entries, observer) => {

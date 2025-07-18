@@ -20,7 +20,7 @@ class GeneratorOptimization {
     add_action( 'wp_enqueue_scripts', array( $this, 'lazybackgroundjs' ) );
     
     // buffer lazy process
-    add_action('the_content', array( $this, "disable_lazyload_for_images" ), 100, 20 );
+    add_action('the_content', array( $this, "buffer_optimize_output" ), 100, 20 );
 
     // defer styles
     add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 999, 200 );
@@ -38,6 +38,38 @@ class GeneratorOptimization {
     }
   }
 
+  /**
+   * Buffer optimize output
+   *
+   * @param string $content
+   * @return void
+   */
+  public function buffer_optimize_output( $content ) {
+    $content = $this->disable_lazyload_for_images( $content );
+    $content = $this->no_lazy_first_two_section( $content );
+    return $content;
+  }
+  
+  /**
+   * Disable lazyload for first two sections
+   *
+   * @param string $content
+   * @return void
+   */
+  private function no_lazy_first_two_section( $content ) {
+    $pattern = '/(<div\b[^>]*class="[^"]*\bet_pb_section\b[^"]*")/';
+    $count = 0;
+
+    $content = preg_replace_callback($pattern, function($matches) use (&$count) {
+      if ($count < 2) {
+        $count++;
+        return preg_replace('/class="([^"]*)"/', 'class="$1 loaded"', $matches[0]);
+      }
+      return $matches[0];
+    }, $content);
+
+    return $content;
+  }
 
   /**
    * Disable lazyload on images
@@ -45,7 +77,7 @@ class GeneratorOptimization {
    * @param string $content
    * @return void
    */
-  public function disable_lazyload_for_images( $content ) {
+  private function disable_lazyload_for_images( $content ) {
     if( !$this->is_optimize() ) {
       return $content;
     }
@@ -171,8 +203,7 @@ class GeneratorOptimization {
     $custom_css .= "
     div.et_pb_section.et_pb_with_background:not(.loaded),
     div.et_pb_section:not(.loaded) .et_pb_with_background,
-    .et_pb_slider .et_pb_slide:not(.et-pb-active-slide), 
-    .et_pb_slider:not(.loaded) .et_pb_slide
+	  div.et_pb_section:not(.loaded) .et_pb_slide:not(.et-pb-active-slide)
     {
     ";
     $custom_css .= "background-image: unset!important;";
