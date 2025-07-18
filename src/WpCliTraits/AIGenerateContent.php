@@ -176,7 +176,6 @@ trait AIGenerateContent {
       $this->ai_content_generate( $apidata, $token, $post);
     }
 
-    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'AI contents has been generated. ', 'adiosgenerator' ) );
   }
 }

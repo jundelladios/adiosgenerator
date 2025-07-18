@@ -142,7 +142,6 @@ trait ProcessContent {
     // gravity forms email
     $this->gform_notification_replace_default_email( $retdata->email_address );
     
-    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'All contents pages, layouts and builder has been synced!', 'adiosgenerator' ) );
   }
 

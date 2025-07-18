@@ -201,7 +201,6 @@ trait StockPhotos {
       $this->post_stockphotos( $token, $apidata, $post );
     }
 
-    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'Stock photos has been generated. ', 'adiosgenerator' ) );
   }
 }

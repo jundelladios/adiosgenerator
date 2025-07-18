@@ -72,7 +72,6 @@ trait ServicesPages {
       }
     }
 
-    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'Services pages has been added!', 'adiosgenerator' ) );
 
   }

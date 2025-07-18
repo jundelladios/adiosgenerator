@@ -33,7 +33,6 @@ trait SyncTemplate {
       }
     }
 
-    GeneratorCache::clear_cache();
     WP_CLI::success( __( 'Data has been synced!', 'adiosgenerator' ) );
   }
 }
