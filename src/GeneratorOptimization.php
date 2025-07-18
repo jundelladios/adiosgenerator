@@ -23,7 +23,7 @@ class GeneratorOptimization {
     add_action('the_content', array( $this, "disable_lazyload_for_images" ), 100, 20 );
 
     // defer styles
-    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 100, 20 );
+    add_filter( 'style_loader_tag', array( $this, "defer_styles" ), 999, 200 );
   }
 
   public function lazybackgroundjs() {
