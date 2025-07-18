@@ -15,7 +15,7 @@ class GeneratorLogging {
    */
   public static function message( $message ) {
     if (defined('ADIOSGENERATOR_DEBUG_LOG') && ADIOSGENERATOR_DEBUG_LOG) {
-      error_log( $message );
+      error_log( "\n\n" . $message . "\n\n" );
     }
   }
 }

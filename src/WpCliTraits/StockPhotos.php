@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorCache;
+use WebGenerator\GeneratorLogging;
 use WP_CLI;
 use ET_Core_PageResource;
 
@@ -48,6 +49,7 @@ trait StockPhotos {
     $retvids = array();
 
     $content = $post->post_content;
+    $postId = $post->ID;
 
     // image processing
     preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(jpg|jpeg|png|webp|avif)/i', $post->post_content, $imgurls);
@@ -88,10 +90,12 @@ trait StockPhotos {
       );
 
       $aiImagesData = GeneratorAPI::getResponse( $aiImagesApi );
+
       if( count( $aiImagesData ) ) {
         foreach( $ret as $index => $image ) {
           if( !isset( $aiImagesData[$index] ) ) { continue; }
           $pexelsPhoto = $aiImagesData[$index]->src->original."?fit=crop&w=".$image['width']."&h=" . $image['height'];
+
           $pexelsUrlPath = parse_url($aiImagesData[$index]->url, PHP_URL_PATH);
           $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
           $lastSegment = end($pexelsUrlPathSegments);
@@ -112,22 +116,15 @@ trait StockPhotos {
           $content = str_replace(
             $image['url'],
             wp_get_attachment_url( $photo ),
-            $post->post_content
+            $content
           );
-
-          wp_update_post([
-            'ID' => $post->ID,
-            'post_content' => $content
-          ]);
-
-          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }
 
     // set featured image
     if( $featuredImage ) {
-      set_post_thumbnail($post->ID, $featuredImage);
+      set_post_thumbnail($postId, $featuredImage);
     }
 
 
@@ -168,18 +165,20 @@ trait StockPhotos {
           $content = str_replace(
             $vid['url'],
             wp_get_attachment_url( $video ),
-            $post->post_content
+            $content
           );
-
-          wp_update_post([
-            'ID' => $post->ID,
-            'post_content' => $content
-          ]);
-
-          ET_Core_PageResource::do_remove_static_resources( $post->ID, 'all' );
         }
       }
     }
+
+
+    wp_update_post([
+      'ID' => $postId,
+      'post_content' => $content
+    ]);
+
+    ET_Core_PageResource::do_remove_static_resources( $postId, 'all' );
+    ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
   }
 
 
@@ -197,9 +196,11 @@ trait StockPhotos {
     $token = $assoc_args['token'];
 
     $posts = $this->get_posts_content_generate();
-    foreach( $posts as $post ) {
-      $this->post_stockphotos( $token, $apidata, $post );
-    }
+    // $posts =
+    // foreach( $posts as $post ) {
+    //   $this->post_stockphotos( $token, $apidata, $post );
+    // }
+    $this->post_stockphotos( $token, $apidata, get_post( 7 ) );
 
     WP_CLI::success( __( 'Stock photos has been generated. ', 'adiosgenerator' ) );
   }
