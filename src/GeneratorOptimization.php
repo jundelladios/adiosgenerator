@@ -169,12 +169,10 @@ class GeneratorOptimization {
     // css for lazy backgrounds
     if( $this->is_optimize()):
     $custom_css .= "
-    .et_pb_slider:not(.loaded) .et_pb_slide,
-    .et_pb_slider .et_pb_slide:not(.et-pb-active-slide), 
     div.et_pb_section.et_pb_with_background:not(.loaded),
-    div.et_pb_row.et_pb_with_background:not(.loaded),
-    div.et_pb_column.et_pb_with_background:not(.loaded),
-    div.et_pb_module.et_pb_with_background:not(.loaded)
+    div.et_pb_section:not(.loaded) .et_pb_with_background,
+    .et_pb_slider .et_pb_slide:not(.et-pb-active-slide), 
+    .et_pb_slider:not(.loaded) .et_pb_slide
     {
     ";
     $custom_css .= "background-image: unset!important;";
