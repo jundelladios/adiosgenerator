@@ -158,13 +158,14 @@ class GeneratorOptimization {
     if( !$this->is_optimize()) { return $content; }
     $content = apply_filters( 'diva_generator_before_process_content', $content );
     $content = $this->preconnect_third_parties( $content );
-    $content = $this->force_atf_lcp_background( $content );
     $content = $this->force_loading_eager_images( $content );
     $content = $this->force_non_prio_images( $content );
     $content = $this->force_remove_preloading_mistakes( $content );
 
-    $content = $this->force_move_defered_css_footer( $content );
     $content = $this->force_opt_style_loader( $content );
+    $content = $this->force_atf_lcp_background( $content );
+
+    $content = $this->force_move_defered_css_footer( $content );
     $content = $this->force_delay_javascripts( $content );
 
     $content = $this->lazyload_iframes_with_placeholders( $content );
@@ -240,7 +241,6 @@ class GeneratorOptimization {
                         $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
                           'class' => 'bg-image-replaced-atf',
                           'loading' => 'eager',
-                          // 'fetchpriority' => 'high',
                           'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
                         ]);
 
@@ -277,7 +277,6 @@ class GeneratorOptimization {
                   $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
                     'class' => 'bg-image-replaced-atf',
                     'loading' => 'eager',
-                    // 'fetchpriority' => 'high',
                     'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
                  ]);
 
@@ -511,7 +510,7 @@ class GeneratorOptimization {
     if (!empty($matches[1])) { $handle = $handlmatch[1]; }
 
     $assetLink = $matches[1];
-    return '<link href="' . esc_url($assetLink) . '"  rel="preload" id="' . $handle . '" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" fetchpriority="low" data-opt-css-defered />
+    return '<link href="' . esc_url($assetLink) . '"  rel="preload" id="' . $handle . '" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" data-opt-css-deferred />
     <noscript><link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" /></noscript>
     ';
   }
@@ -525,7 +524,8 @@ class GeneratorOptimization {
    */
   public function force_opt_style_loader( $content ) {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
-      "divi-dummy-critical-css\.css"
+      "divi-dummy-critical-css\.css",
+      "/et-cache/.*et-core.*deferred.*\.min\.css"
     ));
     if( !count( $styles_to_move ) ) { return $content; }
     $combined_pattern = implode('|', $styles_to_move);
