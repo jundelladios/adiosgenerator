@@ -165,9 +165,7 @@ class GeneratorOptimization {
     $content = $this->force_opt_style_loader( $content );
     $content = $this->force_atf_lcp_background( $content );
 
-    $content = $this->force_move_defered_css_footer( $content );
     $content = $this->force_delay_javascripts( $content );
-
     $content = $this->lazyload_iframes_with_placeholders( $content );
     $content = $this->lazyload_img_with_placeholders( $content );
 
@@ -563,20 +561,20 @@ class GeneratorOptimization {
    * @param [type] $content
    * @return void
    */
-  public function force_move_defered_css_footer( $content ) {
-    $pattern = '#<link\b(?=[^>]*rel=["\']preload["\'])(?=[^>]*as=["\']style["\'])(?=[^>]*onload=["\']this\.onload=null;this\.rel=\'stylesheet\';["\'])[^>]*>#i';
-    preg_match_all($pattern, $content, $matches);
+  // public function force_move_defered_css_footer( $content ) {
+  //   $pattern = '#<link\b(?=[^>]*rel=["\']preload["\'])(?=[^>]*as=["\']style["\'])(?=[^>]*onload=["\']this\.onload=null;this\.rel=\'stylesheet\';["\'])[^>]*>#i';
+  //   preg_match_all($pattern, $content, $matches);
     
-    $deferedStyles = "";
-    if (!empty($matches[0])) {
-      foreach ($matches[0] as $tag) {
-        $content = str_replace($tag, "", $content);
-        $deferedStyles .= $this->preload_css( $tag ) . "\n";
-      }
-    }
-    $content = str_replace('</body>', $deferedStyles . "\n</body>", $content);
-    return $content;
-  }
+  //   $deferedStyles = "";
+  //   if (!empty($matches[0])) {
+  //     foreach ($matches[0] as $tag) {
+  //       $content = str_replace($tag, "", $content);
+  //       $deferedStyles .= $this->preload_css( $tag ) . "\n";
+  //     }
+  //   }
+  //   $content = str_replace('</body>', $deferedStyles . "\n</body>", $content);
+  //   return $content;
+  // }
 
 
   public function google_fonts_optimization( $content ) {
