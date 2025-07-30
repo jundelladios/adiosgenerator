@@ -511,8 +511,7 @@ class GeneratorOptimization {
 
     $assetLink = $matches[1];
     return '<link href="' . esc_url($assetLink) . '"  rel="preload" id="' . $handle . '" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" data-opt-css-deferred />
-    <noscript><link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" /></noscript>
-    ';
+    <noscript><link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" /></noscript>';
   }
 
   /**
