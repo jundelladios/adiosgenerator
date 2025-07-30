@@ -162,14 +162,13 @@ class GeneratorOptimization {
     $content = $this->force_non_prio_images( $content );
     $content = $this->force_remove_preloading_mistakes( $content );
 
+    $content = $this->google_fonts_optimization( $content );
     $content = $this->force_opt_style_loader( $content );
     $content = $this->force_atf_lcp_background( $content );
 
     $content = $this->force_delay_javascripts( $content );
     $content = $this->lazyload_iframes_with_placeholders( $content );
     $content = $this->lazyload_img_with_placeholders( $content );
-
-    $content = $this->google_fonts_optimization( $content );
 
     apply_filters( 'diva_generator_after_process_content', $content );
     return $content;
