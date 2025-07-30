@@ -15,12 +15,20 @@ class ComposerStaticInit0549cbb316d7f82358f32eedff6ed474
         array (
             'WebGenerator\\' => 13,
         ),
+        'C' => 
+        array (
+            'Carbon_Fields\\' => 14,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
         'WebGenerator\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Carbon_Fields\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/htmlburger/carbon-fields/core',
         ),
     );
 

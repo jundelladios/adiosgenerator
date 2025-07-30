@@ -39,33 +39,7 @@ class GeneratorMedia {
           "Yes" => "1"
         ),
         "helps" => __( 'If set, Make sure this attachment is in the ABOVE THE FOLD content.', 'adiosgenerator' )
-      ),
-      array(
-        "label" => "LCP: Preload Image",
-        "name" => "adiosgenerator_prioritize_background",
-        "options" => array(
-          "No" => "0",
-          "Desktop - High Priority" => "1",
-          "Desktop - Low Priority" => "2",
-          "Mobile - High Priority" => "3",
-          "Mobile - Low Priority" => "4",
-          "All Media - High Priority" => "5",
-          "All Media - Low Priority" => "6",
-          "Neutral" => "7",
-          "Desktop - Neutral" => "8",
-          "Mobile - Neutral" => "9"
-        ),
-        "helps" => __( "If set, Make sure this attachment is in the ABOVE THE FOLD content. (High for backgrounds, Low for sliders, Neutral undecided as long this image has been prioritized)", 'adiosgenerator' )
-      ),
-      array(
-        "label" => "LCP: Preload with SRCSETs",
-        "name" => "adiosgenerator_preload_srcset",
-        "options" => array(
-          "No" => "0",
-          "Yes" => "1"
-        ),
-        "helps" => __( 'If preload is using img tag and sercset, enable this.', 'adiosgenerator' )
-      ),
+      )
     );
   }
   
@@ -128,26 +102,12 @@ class GeneratorMedia {
       'fields'     => 'ids',
       'numberposts' => -1,
     ]);
-
-    $preloaded = get_posts( [
-      'post_type'  => 'attachment',
-      'fields'     => 'ids',
-      'numberposts' => -1,
-      'meta_query' => array(
-        array(
-          'key'     => 'adiosgenerator_prioritize_background',
-          'value'   => '0',
-          'compare' => '!='
-        )
-      )
-    ]);
     
 
     $data = [
       'status' => 'ok',
       'message' => array(
-        'dislazy' => $dislazy,
-        'preloaded' => $preloaded
+        'dislazy' => $dislazy
       ),
       'timestamp' => time()
     ];
@@ -156,7 +116,7 @@ class GeneratorMedia {
   }
 
   /**
-   * Handles global variable for script and media label js to display if media was preloaded or lazyloaded
+   * Handles global variable for script and media label js to display if media was lazyloaded
    *
    * @param string $hook
    * @return void
