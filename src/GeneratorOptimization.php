@@ -123,6 +123,10 @@ class GeneratorOptimization {
       div.et_pb_section.et_pb_with_background.no-lazyload {
         position: relative;
       }
+      div.et_pb_section.no-lazyload .et_pb_slide:nth-child(1) .et_pb_slide_description {
+        animation: none!important;
+        animation-name: none!important;
+      }
       img.bg-image-replaced-atf {
         position: absolute;
         left: 50%;
