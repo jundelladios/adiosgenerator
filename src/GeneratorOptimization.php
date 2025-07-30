@@ -524,8 +524,7 @@ class GeneratorOptimization {
    */
   public function force_opt_style_loader( $content ) {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
-      "divi-dummy-critical-css\.css",
-      "/et-cache/.*et-core.*deferred.*\.min\.css"
+      "et-cache"
     ));
     if( !count( $styles_to_move ) ) { return $content; }
     $combined_pattern = implode('|', $styles_to_move);
