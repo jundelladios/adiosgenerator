@@ -165,10 +165,12 @@ class GeneratorOptimization {
     $content = $this->google_fonts_optimization( $content );
     $content = $this->force_opt_style_loader( $content );
     $content = $this->force_atf_lcp_background( $content );
+    $content = $this->force_cached_inlined_style_header( $content );
 
     $content = $this->force_delay_javascripts( $content );
     $content = $this->lazyload_iframes_with_placeholders( $content );
     $content = $this->lazyload_img_with_placeholders( $content );
+    
 
     apply_filters( 'diva_generator_after_process_content', $content );
     return $content;
@@ -520,7 +522,8 @@ class GeneratorOptimization {
    */
   public function force_opt_style_loader( $content ) {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
-      "et-cache",
+      "critical-css",
+      "et-core-unified"
     ));
     if( !count( $styles_to_move ) ) { return $content; }
     $combined_pattern = implode('|', $styles_to_move);
@@ -690,5 +693,26 @@ class GeneratorOptimization {
 
     return $content;
   }
+
+
+
+  public function force_cached_inlined_style_header( $content ) {
+    // Move <style> tags with id containing "cached-inline-styles" from body to head
+    // Find all <style> tags with id containing "cached-inline-styles"
+    if (preg_match_all('/<style[^>]*id=["\'][^"\']*cached-inline-styles[^"\']*["\'][^>]*>.*?<\/style>/is', $content, $matches)) {
+      foreach ($matches[0] as $style_tag) {
+        // Remove from current position
+        $content = str_replace($style_tag, '', $content);
+        // Insert before </head>
+        if (stripos($content, '</head>') !== false) {
+          $content = str_ireplace('</head>', $style_tag . "\n</head>", $content);
+        } else {
+          // Fallback: insert at the very start if </head> not found
+          $content = $style_tag . "\n" . $content;
+        }
+      }
+    }
+    return $content;
+  } 
 
 }
