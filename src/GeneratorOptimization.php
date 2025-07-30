@@ -523,7 +523,7 @@ class GeneratorOptimization {
    */
   public function force_opt_style_loader( $content ) {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
-      "et-cache"
+      "et-cache",
     ));
     if( !count( $styles_to_move ) ) { return $content; }
     $combined_pattern = implode('|', $styles_to_move);
@@ -623,31 +623,7 @@ class GeneratorOptimization {
             $new_tag = str_replace($font_url, $local_font_url, $new_tag);
           }
 
-
-          // Get the content of the <style> tag (without the <style> tags themselves)
-          if (preg_match('/<style[^>]*>(.*?)<\/style>/is', $new_tag, $style_content_match)) {
-            $style_content = $style_content_match[1];
-          } else {
-            $style_content = '';
-          }
-
-          // Get the id value if present
-          $id_value = null;
-          if (preg_match('/id=["\']([^"\']+)["\']/', $new_tag, $id_match)) {
-            $id_value = $id_match[1];
-          }
-
-          if( !empty( $id_value ) && !empty( $style_content )) {
-            $local_font_css_path = $fonts_dir . $id_value . ".css";
-            if (!file_exists($local_font_css_path)) {
-              file_put_contents($local_font_css_path, $style_content);
-            }
-
-            $local_font_css_url = trailingslashit($fonts_url) . $id_value . ".css";
-            $cssFontTag = '<link rel="stylesheet" href="'. $local_font_css_url .'" id="'. $id_value .'" />';
-            $content = str_replace( $style_tag, $this->preload_css( $cssFontTag), $content );
-          }
-
+          $content = str_replace( $style_tag, $new_tag, $content );
         }
 
       }
