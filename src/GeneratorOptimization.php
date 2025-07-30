@@ -699,7 +699,11 @@ class GeneratorOptimization {
   public function force_cached_inlined_style_header( $content ) {
     // Move <style> tags with id containing "cached-inline-styles" from body to head
     // Find all <style> tags with id containing "cached-inline-styles"
-    if (preg_match_all('/<style[^>]*id=["\'][^"\']*cached-inline-styles[^"\']*["\'][^>]*>.*?<\/style>/is', $content, $matches)) {
+    // Improved: Use array to check for multiple style IDs containing "cached-inline-styles"
+    $cached_inline_ids = array('cached-inline-styles', 'googlefonts');
+    $id_pattern = implode('|', array_map('preg_quote', $cached_inline_ids));
+    $regex = '/<style[^>]*id=["\']([^"\']*(' . $id_pattern . ')[^"\']*)["\'][^>]*>.*?<\/style>/is';
+    if (preg_match_all($regex, $content, $matches)) {
       foreach ($matches[0] as $style_tag) {
         // Remove from current position
         $content = str_replace($style_tag, '', $content);
