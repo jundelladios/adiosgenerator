@@ -17,6 +17,8 @@ class GeneratorCache {
    */
   public function init() {
     add_action( 'adiosgenerator_clear_cache', array( $this, 'clear_cache_call' ) );
+    add_action( 'save_post', array( $this, 'clear_cache_call' ) );
+    add_action( 'deleted_post', array( $this, 'clear_cache_call' ) );
   }
 
   /**

@@ -53,6 +53,28 @@ class GeneratorAdminBar {
       ],
     ));
 
+    // tutorials
+    $admin_bar->add_node([
+      'id'     => 'diva_generator_menu_tutorials',
+      'parent' => 'diva_generator_menu',
+      'title'  => 'Tutorials',
+      'href'   => admin_url( 'admin.php?page=diva-tutorials' )
+    ]);
+
+
+    // support
+    $admin_bar->add_node([
+      'id'     => 'diva_generator_menu_support',
+      'parent' => 'diva_generator_menu',
+      'title'  => 'Support',
+      'href'   => constant('ADIOSGENERATOR_API_URL') . "/support",
+      'meta'   => [
+        'title'  => 'Support',
+        'target' => '_blank'
+      ],
+    ]);
+
+
     // clear cache
     $admin_bar->add_node([
         'id'     => 'diva_generator_menu_clear_cache',
