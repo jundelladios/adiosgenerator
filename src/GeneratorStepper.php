@@ -15,9 +15,12 @@ class GeneratorStepper {
    * @return void
    */
   public function init() {
-    add_action( 'wp_enqueue_scripts', array( $this, 'stepper_scripts' ) );
-    add_action( 'admin_enqueue_scripts', array( $this, 'stepper_scripts' ) );
-    add_action( 'wp_ajax_wp_adiosgenerator_stepper_ajax', array( $this, 'wp_adiosgenerator_stepper_ajax' ));
+    
+    if( get_option( GeneratorUtilities::et_adiosgenerator_option( "client_application" ), 0 ) ) {
+      add_action( 'wp_enqueue_scripts', array( $this, 'stepper_scripts' ) );
+      add_action( 'admin_enqueue_scripts', array( $this, 'stepper_scripts' ) );
+      add_action( 'wp_ajax_wp_adiosgenerator_stepper_ajax', array( $this, 'wp_adiosgenerator_stepper_ajax' ));
+    }
   }
 
 
@@ -26,7 +29,6 @@ class GeneratorStepper {
 
     $stepvalue = isset( $_POST['step'] ) ? $_POST['step'] : null;
     $step = update_option( GeneratorUtilities::et_adiosgenerator_option( "step" ), $stepvalue );
-    error_log( "STEP: ".$step );
 
     return $stepvalue;
   }

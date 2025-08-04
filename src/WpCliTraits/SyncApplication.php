@@ -24,6 +24,9 @@ trait SyncApplication {
 
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );
+
+    // sync data indicates that this is client application
+    update_option( GeneratorUtilities::et_adiosgenerator_option( "client_application" ), 1 );
     
     /**
      * Store Previews Theme Accent Colors
