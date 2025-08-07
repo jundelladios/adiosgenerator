@@ -12,7 +12,7 @@ use WebGenerator\GeneratorLogging;
 
 trait SEOPages {
 
-  private function process_post_seo( $token, $apidata, $post ) {
+  private function process_post_seo( $apidata, $post ) {
 
     $content = $post->post_content;
     preg_match('/<(p)\b[^>]*>(.*?)<\/p>/is', $content, $matches);
@@ -26,8 +26,7 @@ trait SEOPages {
       GeneratorAPI::generatorapi( "/api/trpc/openai.askseo" ),
       array(
         "instructions" => $instructions
-      ),
-      $token
+      )
     );
 
     $apidata = GeneratorAPI::getResponse( $apiseo );
@@ -35,10 +34,9 @@ trait SEOPages {
     update_post_meta( $post->ID, '_wds_focus-keywords', implode( ",", $apidata->seo_keywords ) );
   }
 
-  public function process_seo_pages( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function process_seo_pages() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
-    $token = $assoc_args['token'];
     
     $posts = get_posts(array(
       'posts_per_page' => -1,
@@ -51,7 +49,7 @@ trait SEOPages {
     ));
 
     foreach( $posts  as $post ) {
-      $this->process_post_seo( $token, $apidata, $post );
+      $this->process_post_seo( $apidata, $post );
     }
 
     WP_CLI::success( __( 'SEO pages has been generated. ', 'adiosgenerator' ) );

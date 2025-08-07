@@ -17,8 +17,8 @@ trait SiteFavicon {
     * @param mixed $assoc_args
     * @return void
     */
-  public function favicon( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function favicon() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $retdata = $apidata->client;

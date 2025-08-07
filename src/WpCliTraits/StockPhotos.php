@@ -17,11 +17,10 @@ trait StockPhotos {
   /**
    * Reusable code to handle content replacement from AI images
    *
-   * @param string $token
    * @param [type] $post
    * @return void
    */
-  private function post_stockphotos( $token, $apidata, $post ) {
+  private function post_stockphotos( $apidata, $post ) {
 
     $stockArgs = array();
     if( $post->post_type == "diva_services") {
@@ -85,13 +84,12 @@ trait StockPhotos {
         GeneratorAPI::generatorapi( "/api/trpc/openai.askstockphotos" ),
         array_merge($stockArgs, array(
           "number_request" => count( $ret )
-        )),
-        $token
+        ))
       );
 
       $aiImagesData = GeneratorAPI::getResponse( $aiImagesApi );
 
-      if( count( $aiImagesData ) ) {
+      if( $aiImagesData && count( $aiImagesData ) ) {
         foreach( $ret as $index => $image ) {
           if( !isset( $aiImagesData[$index] ) ) { continue; }
           $pexelsPhoto = $aiImagesData[$index]->src->original."?fit=crop&w=".$image['width']."&h=" . $image['height'];
@@ -134,12 +132,11 @@ trait StockPhotos {
         GeneratorAPI::generatorapi( "/api/trpc/openai.askvideos" ),
         array_merge($stockArgs, array(
           "number_request" => count( $retvids )
-        )),
-        $token
+        ))
       );
       
       $aiVideosData = GeneratorAPI::getResponse( $aiVideosApi );
-      if( count( $aiVideosData ) ) {
+      if( $aiVideosData && count( $aiVideosData ) ) {
         foreach( $retvids as $index => $vid ) {
           if( !isset( $aiVideosData[$index] ) ) { continue; }
           $vidURL = "";
@@ -189,15 +186,13 @@ trait StockPhotos {
     * @param [type] $assoc_args
     * @return void
     */
-  public function stockphotos( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function stockphotos() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
-    
-    $token = $assoc_args['token'];
 
     $posts = $this->get_posts_content_generate();
     foreach( $posts as $post ) {
-      $this->post_stockphotos( $token, $apidata, $post );
+      $this->post_stockphotos( $apidata, $post );
     }
 
     WP_CLI::success( __( 'Stock photos has been generated. ', 'adiosgenerator' ) );

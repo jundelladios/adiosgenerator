@@ -18,8 +18,8 @@ trait SyncTemplate {
     * @param mixed $assoc_args
     * @return void
     */
-  public function sync_template_data( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args, "appWpTemplateSync" );
+  public function sync_template_data() {
+    $apidata = $this->appWpTokenGet( "appWpTemplateSync" );
     if( !$apidata ) return;
     $retdata = $apidata->client;
     $divi = (array) json_decode( json_encode($apidata->divi), true );

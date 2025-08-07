@@ -13,8 +13,8 @@ use WebGenerator\GeneratorCache;
 
 trait ServicesPages {
 
-  public function process_services_pages( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function process_services_pages() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $client = $apidata->client;

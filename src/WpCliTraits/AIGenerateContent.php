@@ -15,6 +15,7 @@ use WP_CLI;
 trait AIGenerateContent {
 
   private function allowed_replace( $excludes, $paragraph ) {
+    if( empty( $paragraph )) { return false; }
     foreach ($excludes as $word) {
       if (stripos($paragraph, $word) !== false) {
         return false;
@@ -27,11 +28,10 @@ trait AIGenerateContent {
     * Reusable code to handle content replacement from AI
     *
     * @param mixed $apidata
-    * @param string $token
     * @param int $post
     * @return void
     */
-  private function ai_content_generate( $apidata, $token, $post ) {
+  private function ai_content_generate( $apidata, $post ) {
 
     $retdata = $apidata->client;
     $content = $post->post_content;
@@ -127,8 +127,7 @@ trait AIGenerateContent {
       array(
         "instructions" => $instructions_text,
         "max" => count( $instructions )
-      ),
-      $token
+      )
     );
 
     $apidata = GeneratorAPI::getResponse( $aiContentsApi );
@@ -156,11 +155,11 @@ trait AIGenerateContent {
     * @param mixed $assoc_args
     * @return void
     */
-  public function generate_ai_content( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function generate_ai_content() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
-    $token = $assoc_args['token'];
     $retdata = $apidata->client;
+    error_log( json_encode( $retdata ) );
 
     $posts = get_posts(array(
       'posts_per_page' => -1,
@@ -175,7 +174,7 @@ trait AIGenerateContent {
     ));
 
     foreach( $posts as $post ) {
-      $this->ai_content_generate( $apidata, $token, $post);
+      $this->ai_content_generate( $apidata, $post);
     }
 
     WP_CLI::success( __( 'AI contents has been generated. ', 'adiosgenerator' ) );

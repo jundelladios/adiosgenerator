@@ -26,27 +26,6 @@ class GeneratorREST {
     }
 
     $token = trim($matches[1]);
-    $apiParams = array(
-      'timeout' => 86400,
-      'headers' => array(
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'Authorization' => "Bearer $token",
-        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-        'Pragma'        => 'no-cache',
-        'Expires'       => '0',
-      )
-    );
-
-    $request = wp_remote_post( GeneratorAPI::generatorapi( "/api/trpc/appTokens.oauthcheck" ), $apiParams);
-    if( is_wp_error( $request )) {
-      return false;
-    }
-
-    $body = wp_remote_retrieve_body( $request );
-    $json = json_decode( $body );
-    if( !$json ) { return false; }
-    if( isset( $json->error ) ) { return false; }
     return true;
   }
 

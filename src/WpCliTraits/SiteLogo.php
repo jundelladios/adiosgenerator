@@ -18,8 +18,8 @@ trait SiteLogo {
     * @param mixed $assoc_args
     * @return void
     */
-  public function site_logo( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function site_logo() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $retdata = $apidata->client;

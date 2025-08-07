@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use WebGenerator\GeneratorAPI;
+use WebGenerator\GeneratorUtilities;
 use WP_CLI_Command;
 use WP_CLI;
 
@@ -55,6 +56,39 @@ class GeneratorCLI extends WP_CLI_Command {
     return true;
   }
 
+  public function init_template() {
+    $data = GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/appTokens.appWpTemplateSync" ),
+      array()
+    );
+    $apidata = GeneratorAPI::getResponse( $data );
+    if(!$apidata) {
+      WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
+      return false;
+    }
+
+    WP_CLI::success( __( 'App template has been initialized', 'adiosgenerator' ) );
+    set_transient( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ), $apidata, 0 );
+  }
+
+  public function init_client() {
+    $data = GeneratorAPI::run(
+      GeneratorAPI::generatorapi( "/api/trpc/appTokens.appWpSync" ),
+      array()
+    );
+    $apidata = GeneratorAPI::getResponse( $data );
+    if(!$apidata) {
+      WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
+      return false;
+    }
+
+    error_log( json_encode( $apidata ));
+
+    WP_CLI::success( __( 'App client has been initialized', 'adiosgenerator' ) );
+    set_transient( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ), $apidata, 0 );
+  }
+
+
   /**
    * Validate application tokens either app or template
    *
@@ -62,24 +96,12 @@ class GeneratorCLI extends WP_CLI_Command {
    * @param string $endpoint
    * @return void
    */
-  private function appWpTokenGet( $assoc_args, $endpoint="appWpSync" ) {
-    if( !$this->requiredParams( $assoc_args, array('token') ) ) {
-      return false;
+  private function appWpTokenGet( $endpoint="appWpSync" ) {
+    if( $endpoint == "appWpSync" ) {
+      return get_transient( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ) );
+    } else {
+      return get_transient( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ) );
     }
-
-    $token = $assoc_args['token'];
-    $data = GeneratorAPI::run(
-      GeneratorAPI::generatorapi( "/api/trpc/appTokens.{$endpoint}" ),
-      array(),
-      $token
-    );
-    $apidata = GeneratorAPI::getResponse( $data );
-    if(!$apidata) {
-      WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
-      return false;
-    }
-    GeneratorUtilities::disable_post_revision();
-    return $apidata;
   }
 
   /**

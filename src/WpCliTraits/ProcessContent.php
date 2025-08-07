@@ -22,8 +22,8 @@ trait ProcessContent {
     * @param mixed $assoc_args
     * @return void
     */
-  public function process_content( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function process_content() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $retdata = $apidata->client;

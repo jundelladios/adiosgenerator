@@ -18,8 +18,8 @@ trait SiteLogoSecondary {
     * @param mixed $assoc_args
     * @return void
     */
-  public function site_secondary_logo( $args, $assoc_args ) {
-    $apidata = $this->appWpTokenGet( $assoc_args );
+  public function site_secondary_logo() {
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $retdata = $apidata->client;

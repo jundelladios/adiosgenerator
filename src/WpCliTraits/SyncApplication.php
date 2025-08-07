@@ -17,9 +17,9 @@ trait SyncApplication {
     * @param mixed $assoc_args
     * @return void
     */
-  public function syncdata( $args, $assoc_args ) {
+  public function syncdata() {
     global $wpdb;
-    $apidata = $this->appWpTokenGet( $assoc_args );
+    $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
