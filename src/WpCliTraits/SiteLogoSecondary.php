@@ -23,7 +23,7 @@ trait SiteLogoSecondary {
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
+    $divi = (array) $apidata->divi;
 
     $thelogo = $retdata->logo;
     $logo = GeneratorUtilities::upload_file_by_url(

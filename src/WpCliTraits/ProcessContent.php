@@ -28,7 +28,7 @@ trait ProcessContent {
 
     $retdata = $apidata->client;
     $placeholder = $apidata->placeholder;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
+    $divi = (array) $apidata->divi;
 
     $posts = $this->get_posts_content_generate();
 

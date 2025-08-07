@@ -22,7 +22,7 @@ trait SiteFavicon {
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
+    $divi = (array) $apidata->divi;
 
     $thefavicon = $retdata->favicon;
     $favicon = GeneratorUtilities::upload_file_by_url(

@@ -23,7 +23,7 @@ trait SyncApplication {
     if( !$apidata ) return;
 
     $retdata = $apidata->client;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
+    $divi = (array) $apidata->divi;
 
     // sync data indicates that this is client application
     update_option( GeneratorUtilities::et_adiosgenerator_option( "client_application" ), 1 );

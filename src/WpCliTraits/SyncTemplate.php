@@ -22,7 +22,7 @@ trait SyncTemplate {
     $apidata = $this->appWpTokenGet( "appWpTemplateSync" );
     if( !$apidata ) return;
     $retdata = $apidata->client;
-    $divi = (array) json_decode( json_encode($apidata->divi), true );
+    $divi = (array) $apidata->divi;
 
     /**
      * Elegant themes options
