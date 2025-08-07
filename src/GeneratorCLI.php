@@ -68,7 +68,7 @@ class GeneratorCLI extends WP_CLI_Command {
     }
 
     WP_CLI::success( __( 'App template has been initialized', 'adiosgenerator' ) );
-    set_transient( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ), $apidata, 0 );
+    update_option( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ), json_encode( $apidata ) );
   }
 
   public function init_client() {
@@ -82,10 +82,8 @@ class GeneratorCLI extends WP_CLI_Command {
       return false;
     }
 
-    error_log( json_encode( $apidata ));
-
     WP_CLI::success( __( 'App client has been initialized', 'adiosgenerator' ) );
-    set_transient( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ), $apidata, 0 );
+    update_option( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ), json_encode( $apidata ) );
   }
 
 
@@ -98,9 +96,9 @@ class GeneratorCLI extends WP_CLI_Command {
    */
   private function appWpTokenGet( $endpoint="appWpSync" ) {
     if( $endpoint == "appWpSync" ) {
-      return get_transient( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ) );
+      return json_decode( get_option( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ) ) );
     } else {
-      return get_transient( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ) );
+      return json_decode( get_option( GeneratorUtilities::et_adiosgenerator_option( 'template_data' ) ) );
     }
   }
 
