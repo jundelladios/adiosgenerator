@@ -58,7 +58,7 @@ class GeneratorAdminBar {
       'id'     => 'diva_generator_menu_tutorials',
       'parent' => 'diva_generator_menu',
       'title'  => 'Tutorials',
-      'href'   => admin_url( 'admin.php?page=diva-tutorials' )
+      'href'   => '#diva-tutorials'
     ]);
 
 
@@ -67,7 +67,7 @@ class GeneratorAdminBar {
       'id'     => 'diva_generator_menu_support',
       'parent' => 'diva_generator_menu',
       'title'  => 'Support',
-      'href'   => constant('ADIOSGENERATOR_API_URL') . "/support",
+      'href'   => '#diva-support',
       'meta'   => [
         'title'  => 'Support',
         'target' => '_blank'

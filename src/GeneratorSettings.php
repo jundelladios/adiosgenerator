@@ -42,12 +42,7 @@ class GeneratorSettings {
           'Tutorials',
           'Tutorials',
           'manage_options',
-          'diva-tutorials',
-          function() {;
-            ob_start();
-              require_once( constant("ADIOSGENERATOR_PLUGIN_DIR") . "/pages/tutorials.php" );
-            echo ob_get_clean();
-          }
+          '#diva-tutorials'
         );
 
 
@@ -161,7 +156,8 @@ class GeneratorSettings {
       'ajax_url' => admin_url('admin-ajax.php'),
       'nonce'    => wp_create_nonce('adiosgenerator_admin'),
       'path' => $_SERVER['REQUEST_URI'],
-      'support_link' => constant('ADIOSGENERATOR_API_URL') . "/support"
+      'support_link' => constant('ADIOSGENERATOR_API_URL') . "/support",
+      'tutorial' => constant( 'ADIOSGENERATOR_TUTORIALS_URL' ),
     ]);
   }
 }

@@ -63,7 +63,8 @@ class GeneratorStepper {
       'nonce'    => wp_create_nonce('adiosgenerator_stepper'),
       'step' => get_option( GeneratorUtilities::et_adiosgenerator_option( "step" ) ),
       'path' => $_SERVER['REQUEST_URI'],
-      'tutorial' => admin_url( 'admin.php?page=diva-tutorials' ),
+      'support_link' => constant('ADIOSGENERATOR_API_URL') . "/support",
+      'tutorial' => constant( 'ADIOSGENERATOR_TUTORIALS_URL' ),
       'is_adminbar' => is_admin_bar_showing()
     ]);
   }

@@ -20,7 +20,6 @@ class GeneratorServicesPages {
   public function init() {
     add_action( 'init', array( $this, "register_services_pages" ));
     add_filter( 'et_builder_post_types', array( $this, 'enable_divi_builder_on_services_pages' ) );
-    add_action( 'wp_insert_post', array( $this, 'services_pages_divi_default_layout' ), 10, 3);
     add_filter( 'template_include', array( $this, 'force_blank_template_for_services_pages' ));
   }
 
@@ -34,20 +33,10 @@ class GeneratorServicesPages {
     return $template;
   }
 
-  public function services_pages_divi_default_layout( $post_ID, $post, $update ) {
-     // Only set on new posts, not updates
-    if ($update) return;
-
-    // Target custom post type
-    if ($post->post_type === $this->post_name) {
-        // Set the post meta used by Divi to control page layout
-        update_post_meta($post_ID, '_et_pb_page_layout', 'et_full_width_page');
-    }
-  }
-
-  public function enable_divi_builder_on_services_pages() {
-    $post_types[] = $this->post_name;
-    return $post_types;
+  // ensure use divi theme for incoming posts
+  public function enable_divi_builder_on_services_pages( $post_types  ) {
+    $custom_post_types = get_post_types( array( 'public' => true ), 'names' );
+    return array_unique( array_merge( $post_types, $custom_post_types ) );
   }
 
   public function register_services_pages() {
