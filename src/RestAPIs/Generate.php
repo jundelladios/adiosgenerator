@@ -48,7 +48,7 @@ class Generate extends GeneratorREST {
       register_rest_route( 'adiosgenerator', 'client/generate/status', array(
         'methods' => 'GET',
         'callback' => array( $this, "status" ),
-        'permission_callback' => array( $this, 'authorize' )
+        'permission_callback' => '__return_true'
       ));
     });
 
@@ -57,6 +57,8 @@ class Generate extends GeneratorREST {
   }
 
   public function load(): \WP_REST_Response {
+    $this->get_client();
+
     // load all action schedules
     $taskIds = self::autoload_schedule($this->generate_classes);
 
