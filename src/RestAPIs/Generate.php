@@ -42,13 +42,20 @@ class Generate extends GeneratorREST {
         'callback' => array( $this, "load" ),
         'permission_callback' => array( $this, 'authorize' )
       ));
-    });
 
-    add_action( "rest_api_init", function() {
       register_rest_route( 'adiosgenerator', 'client/generate/status', array(
         'methods' => 'GET',
         'callback' => array( $this, "status" ),
-        'permission_callback' => '__return_true'
+        'permission_callback' => '__return_true',
+        'cors' => array(
+          'Access-Control-Allow-Origin' => isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], array(
+            constant('ADIOSGENERATOR_API_URL'),
+            // Add more allowed origins here
+          )) ? $_SERVER['HTTP_ORIGIN'] : '',
+          'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Credentials' => 'true',
+          'Access-Control-Allow-Headers' => 'Authorization, Content-Type, X-WP-Nonce'
+        ),
       ));
     });
 

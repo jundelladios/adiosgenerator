@@ -128,6 +128,16 @@ class ProcessContent extends Generate {
       $content = str_replace( $placeholder->site_name, $retdata->site_name, $content );
       $content = str_replace( $placeholder->tagline, $retdata->slogan, $content );
 
+      // Ensure Divi Builder is loaded for this request
+      if ( ! class_exists('ET_Builder_Value') ) {
+        if ( function_exists('et_builder_load_framework') ) {
+          et_builder_load_framework();
+        } elseif ( function_exists('et_core_setup_theme') ) {
+          // Fallback: load core if available
+          et_core_setup_theme();
+        }
+      }
+      
       $content = $this->dynamic_footer_sitename_replace( $content, $placeholder->site_name, $retdata->site_name );
 
       wp_update_post([
@@ -163,7 +173,7 @@ class ProcessContent extends Generate {
    * @param string $sitename
    * @return void
    */
-  private function dynamic_footer_sitename_replace( $content, $placeholder="", $sitename="" ) {
+  public function dynamic_footer_sitename_replace( $content, $placeholder="", $sitename="" ) {
     $content = wp_unslash( $content );
     $dynamic_contents = et_builder_get_dynamic_contents($content);
     foreach ( $dynamic_contents as $dynamic_item ) {
