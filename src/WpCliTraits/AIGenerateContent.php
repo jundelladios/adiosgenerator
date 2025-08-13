@@ -159,7 +159,6 @@ trait AIGenerateContent {
     $apidata = $this->appWpTokenGet();
     if( !$apidata ) return;
     $retdata = $apidata->client;
-    error_log( json_encode( $retdata ) );
 
     $posts = get_posts(array(
       'posts_per_page' => -1,

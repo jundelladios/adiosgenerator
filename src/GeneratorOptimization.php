@@ -621,7 +621,6 @@ class GeneratorOptimization {
               continue;
             }
             $font_data = wp_remote_retrieve_body($font_response);
-            error_log( $font_data );
             // Save the font file if it doesn't exist
             file_put_contents($local_font_path, $font_data);
             $new_tag = str_replace($font_url, $local_font_url, $new_tag);

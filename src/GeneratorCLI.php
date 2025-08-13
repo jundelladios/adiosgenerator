@@ -7,7 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorUtilities;
-use WP_CLI_Command;
 use WP_CLI;
 
 # traits
@@ -24,7 +23,7 @@ use WebGenerator\WpCliTraits\ServicesPages;
 use WebGenerator\WpCliTraits\SEOPages;
 
 // WP Cli commands for adiosgenerator
-class GeneratorCLI extends WP_CLI_Command {
+class GeneratorCLI extends \WP_CLI_Command {
 
   // cli's
   use ClearCache;
@@ -39,23 +38,6 @@ class GeneratorCLI extends WP_CLI_Command {
   use ServicesPages;
   use SEOPages;
 
-  /**
-   * Handles required parameter from cli's
-   *
-   * @param [type] $assoc_args
-   * @param array $params
-   * @return void
-   */
-  private function requiredParams( $assoc_args, $params = array()) {
-    foreach( $params as $param ) {
-      if( !isset( $assoc_args[$param] ) ) {
-        WP_CLI::error( sprintf( __( 'You need to specify the --%s=<value> parameter', 'adiosgenerator' ), $param ) );
-        return false;
-      }
-    }
-    return true;
-  }
-
   public function init_template() {
     $data = GeneratorAPI::run(
       GeneratorAPI::generatorapi( "/api/trpc/appTokens.appWpTemplateSync" ),
@@ -64,7 +46,6 @@ class GeneratorCLI extends WP_CLI_Command {
     $apidata = GeneratorAPI::getResponse( $data );
     if(!$apidata) {
       WP_CLI::error( __( 'Failed to load your data. App token is invalid!', 'adiosgenerator' ) );
-      return false;
     }
 
     WP_CLI::success( __( 'App template has been initialized', 'adiosgenerator' ) );
