@@ -53,7 +53,7 @@ class AIContents extends Generate {
     update_option( $this->getEvent(), 1 );
   }
 
-  private function allowed_replace( $excludes, $paragraph ) {
+  public function allowed_replace( $excludes, $paragraph ) {
     if( empty( $paragraph )) { return false; }
     foreach ($excludes as $word) {
       if (stripos($paragraph ?? "", $word) !== false) {
@@ -70,7 +70,7 @@ class AIContents extends Generate {
   * @param int $post
   * @return void
   */
-  private function ai_content_generate( $apidata, $post ) {
+  public function ai_content_generate( $apidata, $post ) {
 
     $retdata = $apidata->client;
     $content = $post->post_content;

@@ -44,7 +44,7 @@ class StockPhotos extends Generate {
    * @param [type] $post
    * @return void
    */
-  private function post_stockphotos( $apidata, $post ) {
+  public function post_stockphotos( $apidata, $post ) {
 
     $stockArgs = array();
     if( $post->post_type == "diva_services") {

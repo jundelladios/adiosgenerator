@@ -35,7 +35,7 @@ class Logos extends Generate {
     update_option( $this->getEvent(), 1 );
   }
 
-  private function logo() {
+  public function logo() {
     $apidata = $this->get_client();
     $retdata = $apidata->client;
     $divi = (array) $apidata->divi;
@@ -69,7 +69,7 @@ class Logos extends Generate {
     }
   }
 
-  private function favicon() {
+  public function favicon() {
     $apidata = $this->get_client();
     $retdata = $apidata->client;
     $divi = (array) $apidata->divi;
@@ -89,7 +89,7 @@ class Logos extends Generate {
     }
   }
 
-  private function secondary_logo() {
+  public function secondary_logo() {
     $apidata = $this->get_client();
     $retdata = $apidata->client;
     $divi = (array) $apidata->divi;

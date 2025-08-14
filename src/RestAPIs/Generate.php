@@ -49,7 +49,7 @@ class Generate extends GeneratorREST {
         'permission_callback' => '__return_true',
         'cors' => array(
           'Access-Control-Allow-Origin' => isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], array(
-            constant('ADIOSGENERATOR_API_URL'),
+            constant('ADIOSGENERATOR_API_URL')
             // Add more allowed origins here
           )) ? $_SERVER['HTTP_ORIGIN'] : '',
           'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',

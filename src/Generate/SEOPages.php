@@ -50,7 +50,7 @@ class SEOPages extends Generate {
     update_option( $this->getEvent(), 1 );
   }
   
-  private function process_post_seo( $apidata, $post ) {
+  public function process_post_seo( $apidata, $post ) {
     $content = $post->post_content;
     preg_match('/<(p)\b[^>]*>(.*?)<\/p>/is', $content, $matches);
     $seoContent = isset($matches[2]) ? $matches[2] : '';
