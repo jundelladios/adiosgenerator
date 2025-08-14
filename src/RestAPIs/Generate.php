@@ -46,16 +46,7 @@ class Generate extends GeneratorREST {
       register_rest_route( 'adiosgenerator', 'client/generate/status', array(
         'methods' => 'GET',
         'callback' => array( $this, "status" ),
-        'permission_callback' => '__return_true',
-        'cors' => array(
-          'Access-Control-Allow-Origin' => isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], array(
-            constant('ADIOSGENERATOR_API_URL')
-            // Add more allowed origins here
-          )) ? $_SERVER['HTTP_ORIGIN'] : '',
-          'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Credentials' => 'true',
-          'Access-Control-Allow-Headers' => 'Authorization, Content-Type, X-WP-Nonce'
-        ),
+        'permission_callback' => '__return_true'
       ));
     });
 
@@ -160,6 +151,15 @@ class Generate extends GeneratorREST {
   }
 
   public function status() {
+    $allowed_origins = array(
+      constant('ADIOSGENERATOR_API_URL')
+    );
+    if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
+      header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+    }
+    header('Access-Control-Allow-Methods: GET');
+    header('Access-Control-Allow-Headers: Content-Type');
+
     $this->stale_schedule();
     $statuses = self::getEventStatus($this->generate_classes);
     return wp_send_json_success( array(
