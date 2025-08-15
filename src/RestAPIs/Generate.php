@@ -61,8 +61,7 @@ class Generate extends GeneratorREST {
       "adiosgenerator_generate_execute", 
       [ 'task_id' => $this->taskId() ], 
       $this->getScheduleGroup(),
-      true,
-      0
+      true
     );
 
     // reset statuses when executing the generate api
@@ -70,8 +69,7 @@ class Generate extends GeneratorREST {
     foreach( $statuses as $status ) {
       update_option( $status['event'], 0 );
     }
-
-    do_action( 'action_scheduler_run_queue', 'manual' );
+    
     $this->stale_schedule();
     return wp_send_json_success( array(
       "message" => "Generate is Running..."
