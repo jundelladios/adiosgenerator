@@ -16,15 +16,6 @@ class SEOPages extends Generate {
     $this->event = $this->setEvent( "seo_pages" );
   }
 
-  public function init() {
-    add_action( $this->getEvent(), array( $this, 'execute' ));
-  }
-
-  public function schedule() {
-    as_enqueue_async_action( $this->getEvent(), [ 'task_id' => $this->taskId() ], $this->getScheduleGroup());
-    return $this->taskId();
-  }
-
   public function getEvent() {
     return $this->event;
   }
@@ -68,6 +59,6 @@ class SEOPages extends Generate {
 
     $apidata = GeneratorAPI::getResponse( $apiseo );
     update_post_meta( $post->ID, '_wds_metadesc', $apidata->seo_description ?? "" );
-    update_post_meta( $post->ID, '_wds_focus-keywords', implode( ",", $apidata->seo_keywords ?? "" ) );
+    update_post_meta( $post->ID, '_wds_focus-keywords', implode( ",", !is_array($apidata->seo_keywords) ? [] : $apidata->seo_keywords ) );
   }
 }

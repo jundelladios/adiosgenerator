@@ -17,15 +17,6 @@ class ProcessContent extends Generate {
     $this->event = $this->setEvent( "process_content" );
   }
 
-  public function init() {
-    add_action( $this->getEvent(), array( $this, 'execute' ));
-  }
-
-  public function schedule() {
-    as_enqueue_async_action( $this->getEvent(), [ 'task_id' => $this->taskId() ], $this->getScheduleGroup());
-    return $this->taskId();
-  }
-
   public function getEvent() {
     return $this->event;
   }
@@ -127,7 +118,9 @@ class ProcessContent extends Generate {
       // site name and slogan
       $content = str_replace( $placeholder->site_name, $retdata->site_name, $content );
       $content = str_replace( $placeholder->tagline, $retdata->slogan, $content );
-      $content = $this->dynamic_footer_sitename_replace( $content, $placeholder->site_name, $retdata->site_name );
+      try {
+        $content = $this->dynamic_footer_sitename_replace( $content, $placeholder->site_name, $retdata->site_name );
+      } catch( \Exception $e ) {}
 
       wp_update_post([
         'ID' => $pst->ID,

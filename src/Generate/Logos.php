@@ -14,16 +14,7 @@ class Logos extends Generate {
   public function __construct() {
     $this->event = $this->setEvent( "logos" );
   }
-
-  public function init() {
-    add_action( $this->getEvent(), array( $this, 'execute' ));
-  }
-
-  public function schedule() {
-    as_enqueue_async_action( $this->getEvent(), [ 'task_id' => $this->taskId() ], $this->getScheduleGroup());
-    return $this->taskId();
-  }
-
+  
   public function getEvent() {
     return $this->event;
   }
