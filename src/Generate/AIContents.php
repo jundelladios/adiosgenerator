@@ -106,7 +106,8 @@ class AIContents extends Generate {
     foreach( $matchParagraphs as $match ) {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
-        $instruction = $countWords <= 5 ? "- Write a relevant content {$appendTitle} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendTitle} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
+        // $instruction = $countWords <= 5 ? "- Write a relevant content {$appendTitle} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendTitle} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
+        $instruction = "- Write a relevant content {$appendTitle}: Replace this content: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}. No break or new line, just one-line! The word length should be the same as the original content.\n";
         $matchers[] = array(
           "instructions" => $instruction,
           "content" => $match[2]
@@ -120,7 +121,7 @@ class AIContents extends Generate {
       if( isset( $match[2])) {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendTitle} to be replaced for this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendTitle}: Replace this title: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}, No break or new line, just one-line! The word length should be the same as the original content.\n",
           "content" => $match[2]
         );
       }
@@ -132,7 +133,7 @@ class AIContents extends Generate {
       if( isset( $match[2]) && $match[2] !== "false") {
         $countWords = count(explode(" ", $match[2]));
         $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendTitle} to be replacement with this title: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n",
+          "instructions" => "- Write a relevant title {$appendTitle}: Replace this title: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}, No break or new line, just one-line! The word length should be the same as the original content.\n",
           "content" => $match[2]
         );
       }
