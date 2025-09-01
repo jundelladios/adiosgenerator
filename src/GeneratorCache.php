@@ -33,16 +33,16 @@ class GeneratorCache {
    *
    * @return void
    */
-  public static function cloudflare_clear() {
-    $parsed_url = parse_url(home_url());
-    $domain = $parsed_url['host'];
-    GeneratorAPI::run(
-      GeneratorAPI::generatorapi( "/api/trpc/cw.cloudflareClear" ),
-      array(
-        "hostname" => $domain
-      )
-    );
-  }
+  // public static function cloudflare_clear() {
+  //   $parsed_url = parse_url(home_url());
+  //   $domain = $parsed_url['host'];
+  //   GeneratorAPI::run(
+  //     GeneratorAPI::generatorapi( "/api/trpc/cw.cloudflareClear" ),
+  //     array(
+  //       "hostname" => $domain
+  //     )
+  //   );
+  // }
 
   /**
    * Clear all cache
@@ -55,7 +55,10 @@ class GeneratorCache {
       et_core_clear_transients();
       et_core_clear_wp_cache();
     }
+
+    # clear object cache
     wp_cache_flush();
-    self::cloudflare_clear();
+    # clear cache humingbird
+    do_action( 'wphb_clear_page_cache' );
   }
 }

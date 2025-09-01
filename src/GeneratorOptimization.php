@@ -169,16 +169,95 @@ class GeneratorOptimization {
     $content = $this->google_fonts_optimization( $content );
     $content = $this->force_opt_style_loader( $content );
     $content = $this->force_atf_lcp_background( $content );
+    $content = $this->replace_imgs_under_no_lazyload( $content);
+
     $content = $this->force_cached_inlined_style_header( $content );
 
-    $content = $this->force_delay_javascripts( $content );
+    // $content = $this->force_delay_javascripts( $content );
     $content = $this->lazyload_iframes_with_placeholders( $content );
-    $content = $this->lazyload_img_with_placeholders( $content );
+    // $content = $this->lazyload_img_with_placeholders( $content );
     
+    $content = $this->delay_divi_custom_script_js( $content );
 
     apply_filters( 'diva_generator_after_process_content', $content );
     return $content;
   }
+
+
+
+  /**
+   * Find all <script> tags with id containing "divi-custom" and replace type="text/javascript" (if present) with type="wphb-delay-type",
+   * or add type="wphb-delay-type" if no type attribute exists. Do not remove the id attribute.
+   *
+   * @param string $content
+   * @return string
+   */
+  public function delay_divi_custom_script_js($content) {
+    // Match <script ... id="...divi-custom..." ...>...</script>
+    $pattern = '/<script\b([^>]*)\bid\s*=\s*([\'"])([^\'"]*divi-custom[^\'"]*)\2([^>]*)>(.*?)<\/script>/is';
+    $content = preg_replace_callback($pattern, function($matches) {
+        $before_id = $matches[1];
+        $quote = $matches[2];
+        $id_value = $matches[3];
+        $after_id = $matches[4];
+        $script_content = $matches[5];
+
+        // Combine attributes before and after id
+        $attrs = trim($before_id . ' id=' . $quote . $id_value . $quote . $after_id);
+
+        // Remove any existing type attribute
+        $attrs = preg_replace('/\s*type\s*=\s*([\'"])[^\'"]*\1/i', '', $attrs);
+
+        // Remove any existing data-wphb-type attribute
+        $attrs = preg_replace('/\s*data-wphb-type\s*=\s*([\'"])[^\'"]*\1/i', '', $attrs);
+
+        // Add type="wphb-delay-type" and data-wphb-type="text/javascript"
+        $attrs = trim($attrs) . ' type="wphb-delay-type" data-wphb-type="text/javascript"';
+
+        // Remove duplicate spaces
+        $attrs = preg_replace('/\s+/', ' ', $attrs);
+
+        return '<script' . (strlen($attrs) ? ' ' . $attrs : '') . '>' . $script_content . '</script>';
+    }, $content);
+
+    return $content;
+  }
+
+
+
+  /**
+   * Ensure all <img> tags under elements with class "no-lazyload" have loading="eager" attribute.
+   *
+   * @param string $content
+   * @return string
+   */
+  public function replace_imgs_under_no_lazyload($content) {
+    $pattern = '/(<([a-zA-Z0-9]+)[^>]*class=["\'][^"\']*\bno-lazyload\b[^"\']*["\'][^>]*>)(.*?)(<\/\2>)/is';
+    return preg_replace_callback($pattern, function($matches) {
+      $open_tag = $matches[1];
+      $inner_html = $matches[3];
+      $close_tag = $matches[4];
+
+      // Replace all <img ...> tags in $inner_html to ensure loading="eager"
+      $img_pattern = '/<img\b([^>]*)>/i';
+      $new_inner_html = preg_replace_callback($img_pattern, function($img_matches) {
+        $img_tag_rest = $img_matches[1];
+
+        // Check if loading attribute already exists
+        if (preg_match('/\sloading\s*=\s*([\'"])[^\'"]*\1/i', $img_tag_rest)) {
+          // Replace existing loading attribute with loading="eager"
+          $img_tag_rest = preg_replace('/(\sloading\s*=\s*)([\'"])[^\'"]*\2/i', ' loading="eager"', $img_tag_rest);
+        } else {
+          // Add loading="eager" at the end of the tag
+          $img_tag_rest .= ' loading="eager"';
+        }
+        return '<img' . $img_tag_rest . '>';
+      }, $inner_html);
+
+      return $open_tag . $new_inner_html . $close_tag;
+    }, $content);
+  }
+
 
   /**
    * Background images for ATF LCP
@@ -257,6 +336,7 @@ class GeneratorOptimization {
               }
 
             }
+
           }
          }
        }
@@ -513,7 +593,7 @@ class GeneratorOptimization {
     if (!empty($matches[1])) { $handle = $handlmatch[1]; }
 
     $assetLink = $matches[1];
-    return '<link href="' . esc_url($assetLink) . '"  rel="preload" id="' . $handle . '" as="style" onload="this.onload=null;this.rel=\'stylesheet\';" data-opt-css-deferred />
+    return '<link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" as="print" onload="this.media=\'all\';" />
     <noscript><link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" /></noscript>';
   }
 
@@ -527,7 +607,11 @@ class GeneratorOptimization {
   public function force_opt_style_loader( $content ) {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
       "critical-css",
-      "et-core-unified"
+      "et-core-unified",
+      "#^(?!.*deferred).*#i"
+    // Regex pattern to match stylesheets that do NOT contain "deferred" in the href
+    // Example: '#^(?!.*deferred).*#i'
+    // This can be used to filter out stylesheets with "deferred" in their href attribute
     ));
     if( !count( $styles_to_move ) ) { return $content; }
     $combined_pattern = implode('|', $styles_to_move);
@@ -552,12 +636,14 @@ class GeneratorOptimization {
     }
 
     // remove all unmatched styles from the content
-    $deferedStyles = "";
+   // $deferedStyles = "";
     foreach ($matches_not_in_list as $style_tag) {
-        $content = str_replace($style_tag, "", $content);
-        $deferedStyles .= $this->preload_css( $style_tag ) . "\n";
+        $content = str_replace($style_tag, $this->preload_css( $style_tag ), $content);
+        // // $deferedStyles .= $this->preload_css( $style_tag ) . "\n";
+        // $content = str_replace($style_tag, "", $content);
+        // $deferedStyles .= $this->preload_css( $style_tag ) . "\n";
     }
-    $content = str_replace('</body>', $deferedStyles . "\n</body>", $content);
+    // $content = str_replace('</body>', $deferedStyles . "\n</body>", $content);
     return $content;
   }
 
@@ -674,28 +760,28 @@ class GeneratorOptimization {
     return $content;
   }
 
-  public function lazyload_img_with_placeholders( $content ) {
+  // public function lazyload_img_with_placeholders( $content ) {
     
-    // Find all <img> tags with loading="lazy" attribute
-    if (preg_match_all('/<img\b([^>]*)\bloading=(["\'])lazy\2([^>]*)>/is', $content, $matches, PREG_SET_ORDER)) {
-      foreach ($matches as $img_match) {
-        $full_tag = $img_match[0];
+  //   // Find all <img> tags with loading="lazy" attribute
+  //   if (preg_match_all('/<img\b([^>]*)\bloading=(["\'])lazy\2([^>]*)>/is', $content, $matches, PREG_SET_ORDER)) {
+  //     foreach ($matches as $img_match) {
+  //       $full_tag = $img_match[0];
 
-        // Find the src attribute in the tag
-        if (preg_match('/\bsrc=(["\'])(.*?)\1/i', $full_tag, $src_match)) {
-          $src_value = $src_match[2];
+  //       // Find the src attribute in the tag
+  //       if (preg_match('/\bsrc=(["\'])(.*?)\1/i', $full_tag, $src_match)) {
+  //         $src_value = $src_match[2];
 
-          // Only replace if not already has data-src
-          $new_tag = preg_replace('/\bsrc=(["\'])(.*?)\1/i', '', $full_tag, 1);
-          $placeholder = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2050%2050'%3E%3C/svg%3E";
-          $new_tag = preg_replace('/<img\b/i', '<img data-src="' . $src_value . '" src="'. $placeholder .'" ', $new_tag, 1);
-          $content = str_replace($full_tag, $new_tag . "<noscript>".$full_tag."</noscript>", $content);
-        }
-      }
-    }
+  //         // Only replace if not already has data-src
+  //         $new_tag = preg_replace('/\bsrc=(["\'])(.*?)\1/i', '', $full_tag, 1);
+  //         $placeholder = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2050%2050'%3E%3C/svg%3E";
+  //         $new_tag = preg_replace('/<img\b/i', '<img data-src="' . $src_value . '" src="'. $placeholder .'" ', $new_tag, 1);
+  //         $content = str_replace($full_tag, $new_tag . "<noscript>".$full_tag."</noscript>", $content);
+  //       }
+  //     }
+  //   }
 
-    return $content;
-  }
+  //   return $content;
+  // }
 
 
 

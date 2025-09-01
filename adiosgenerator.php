@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
- * Version: 7.0.7
+ * Version: 7.0.8
  * Text Domain: adiosgenerator
  * Author: AD-IOS Digital Marketing Co.
  * Author URI: https://ad-ios.com/
@@ -19,7 +19,7 @@ if (!class_exists('ActionScheduler')) {
 }
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-use WebGenerator\GeneratorCLI;
+use WebGenerator\GeneratorCLIv2;
 use WebGenerator\GeneratorGravityForms;
 use WebGenerator\GeneratorSSO;
 use WebGenerator\GeneratorREST;
@@ -75,12 +75,12 @@ function adiosgenerator_plugin_check_dependencies() {
 add_theme_support('post-thumbnails');
 
 // // CLI
-// if (defined('WP_CLI') && WP_CLI) {
-// 	WP_CLI::add_command(
-// 		'adiosgenerator',
-// 		GeneratorCLI::class
-// 	);
-// }
+if (defined('WP_CLI') && WP_CLI) {
+	WP_CLI::add_command(
+		'adiosgenerator',
+		GeneratorCLIv2::class
+	);
+}
 
 // Gravity Forms
 (new GeneratorGravityForms)->init();
