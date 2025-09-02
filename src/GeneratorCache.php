@@ -50,6 +50,9 @@ class GeneratorCache {
    * @return void
    */
   public static function clear_cache() {
+    # clear cache humingbird
+    do_action( 'wphb_clear_page_cache' );
+    
     if(class_exists("ET_Core_PageResource")) {
       ET_Core_PageResource::remove_static_resources( "all", "all" );
       et_core_clear_transients();
@@ -58,7 +61,5 @@ class GeneratorCache {
 
     # clear object cache
     wp_cache_flush();
-    # clear cache humingbird
-    do_action( 'wphb_clear_page_cache' );
   }
 }
