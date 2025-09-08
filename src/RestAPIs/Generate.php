@@ -26,6 +26,13 @@ class Generate extends GeneratorREST {
     return "adiosgenerator";
   }
 
+  public function getPexelsFileName( $url ) {
+    $pexelsUrlPath = parse_url($url, PHP_URL_PATH);
+    $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
+    $lastSegment = end($pexelsUrlPathSegments);
+    return $lastSegment;
+  }
+
   public function setEvent( $event ) {
     $prefix = "adiosgenerator_generate_";
     return $prefix . $event;
@@ -51,6 +58,157 @@ class Generate extends GeneratorREST {
     });
 
     add_action( 'adiosgenerator_generate_execute', array( $this, 'executeAll' ));
+    add_action( 'adiosgenerator_upload_stock_photo_replace', array( $this, 'upload_stock_photo_replace' ));
+    add_action( 'adiosgenerator_upload_stock_video_replace', array( $this, 'upload_stock_video_replace' ));
+  }
+
+  /**
+   * Handles replacing a stock photo in a post's content and optionally setting it as the featured image.
+   *
+   * @param array $args {
+   *   @type string  $post_id           The ID of the post to update.
+   *   @type string  $stock_photo       The URL of the new stock photo.
+   *   @type string  $last_photo        The URL of the photo to be replaced.
+   *   @type string  $alt               The alt text for the new photo.
+   *   @type string  $filename          The filename for the new photo.
+   *   @type bool    $is_featured_image Whether to set as featured image.
+   * }
+   */
+  public function upload_stock_photo_replace( $args ) {
+    if (
+      !is_array($args) ||
+      empty($args['post_id']) ||
+      empty($args['stock_photo']) ||
+      empty($args['last_photo'])
+    ) {
+      return;
+    }
+
+    $post_id = $args['post_id'];
+    $stock_photo = $args['stock_photo'];
+    $last_photo = $args['last_photo'];
+    $alt = isset($args['alt']) ? $args['alt'] : '';
+    $filename = isset($args['filename']) ? $args['filename'] : '';
+    $is_featured_image = !empty($args['is_featured_image']);
+
+    // Download and upload the new stock photo to the media library
+    $attachment_id = GeneratorUtilities::upload_file_by_url(
+      $stock_photo,
+      $alt,
+      $filename
+    );
+
+    if (!$attachment_id) {
+      // If upload failed, just replace the URL in content as fallback
+      $post = get_post($post_id);
+      if ($post) {
+        $content = str_replace($last_photo, $stock_photo, $post->post_content);
+        wp_update_post([
+          'ID' => $post_id,
+          'post_content' => $content
+        ]);
+      }
+
+      if (class_exists('ET_Core_PageResource')) {
+        \ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
+      }
+
+      return;
+    }
+
+    // Replace the old photo URL with the new attachment URL in post content
+    $new_url = wp_get_attachment_url($attachment_id);
+    $post = get_post($post_id);
+    if ($post && $new_url) {
+      $content = str_replace($last_photo, $new_url, $post->post_content);
+      wp_update_post([
+        'ID' => $post_id,
+        'post_content' => $content
+      ]);
+    }
+
+    // Set as featured image if requested
+    if ($is_featured_image && $attachment_id) {
+      set_post_thumbnail($post_id, $attachment_id);
+    }
+
+    // Optionally update alt text
+    if ($alt && $attachment_id) {
+      update_post_meta($attachment_id, '_wp_attachment_image_alt', $alt);
+    }
+
+    // Remove static resources cache for this post
+    if (class_exists('ET_Core_PageResource')) {
+      \ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
+    }
+
+    return true;
+  }
+
+
+  /**
+   * Handles replacing stock videos and upload with the given args.
+   *
+   * @param array $args {
+   *   @type int    $post_id     The post ID.
+   *   @type string $stock_video The new stock video URL.
+   *   @type string $last_video  The old video URL to be replaced.
+   *   @type string $filename    The filename for the new video.
+   * }
+   */
+  public function upload_stock_video_replace( $args ) {
+    $post_id     = $args['post_id']     ?? 0;
+    $stock_video = $args['stock_video'] ?? '';
+    $last_video  = $args['last_video']  ?? '';
+    $filename    = $args['filename']    ?? '';
+
+    if ( ! $post_id || ! $stock_video || ! $last_video ) {
+      return;
+    }
+
+    // Try to upload the video from the stock_video URL
+    $attachment_id = null;
+    $attachment_id = GeneratorUtilities::upload_file_by_url(
+      $stock_video,
+      null,
+      $filename
+    );
+
+    // If upload failed, just replace the URL in content as fallback
+    if ( ! $attachment_id ) {
+      $post = get_post( $post_id );
+      if ( $post ) {
+        $content = str_replace( $last_video, $stock_video, $post->post_content );
+        wp_update_post( [
+          'ID' => $post_id,
+          'post_content' => $content
+        ] );
+      }
+
+      if ( class_exists( 'ET_Core_PageResource' ) ) {
+        \ET_Core_PageResource::do_remove_static_resources( $post_id, 'all' );
+      }
+
+      return;
+    }
+
+    // Replace the old video URL with the new attachment URL in post content
+    $new_url = wp_get_attachment_url( $attachment_id );
+    $post = get_post( $post_id );
+    if ( $post && $new_url ) {
+      $content = str_replace( $last_video, $new_url, $post->post_content );
+      wp_update_post( [
+        'ID' => $post_id,
+        'post_content' => $content
+      ] );
+    }
+
+    // Remove static resources cache for this post
+    if ( class_exists( 'ET_Core_PageResource' ) ) {
+      \ET_Core_PageResource::do_remove_static_resources( $post_id, 'all' );
+    }
+
+    return true;
   }
 
   public function load(): \WP_REST_Response {

@@ -393,11 +393,11 @@ class GeneratorOptimization {
         $scheme = $parsed['scheme'] ?? 'https';
         $host = $parsed['host'];
         $home_url = $scheme . '://' . $host;
-        $external_hosts[$home_url] = true; // use assoc array to prevent duplicates
+        $external_links[$home_url] = true; // use assoc array to prevent duplicates
       }
     }
 
-    $unique_external_home_urls = array_keys($external_hosts);
+    $unique_external_home_urls = array_keys($external_links);
     if (!empty($unique_external_home_urls)) {
       $thirdParties = "";
       foreach( $unique_external_home_urls as $url ) {
@@ -608,7 +608,7 @@ class GeneratorOptimization {
     $styles_to_move = apply_filters( 'diva_generator_critical_css_lists', array(
       "critical-css",
       "et-core-unified",
-      "#^(?!.*deferred).*#i"
+      "^(?!.*deferred).*"
     // Regex pattern to match stylesheets that do NOT contain "deferred" in the href
     // Example: '#^(?!.*deferred).*#i'
     // This can be used to filter out stylesheets with "deferred" in their href attribute

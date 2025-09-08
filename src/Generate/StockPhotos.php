@@ -91,7 +91,7 @@ class StockPhotos extends Generate {
     }
 
     // preparation for featured image
-    $featuredImage = null;
+    $featuredImage = false;
 
     // process images
     if( count( $ret ) ) {
@@ -109,36 +109,62 @@ class StockPhotos extends Generate {
           if( !isset( $aiImagesData[$index] ) ) { continue; }
           $pexelsPhoto = $aiImagesData[$index]->src->original."?fit=crop&w=".$image['width']."&h=" . $image['height'];
 
-          $pexelsUrlPath = parse_url($aiImagesData[$index]->url, PHP_URL_PATH);
-          $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
-          $lastSegment = end($pexelsUrlPathSegments);
+          // $pexelsUrlPath = parse_url($aiImagesData[$index]->url, PHP_URL_PATH);
+          // $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
+          // $lastSegment = end($pexelsUrlPathSegments);
 
-          $photo = GeneratorUtilities::upload_file_by_url(
-            $pexelsPhoto,
-            sanitize_title( $aiImagesData[$index]->alt ),
-            $lastSegment
-          );
+          // $photo = GeneratorUtilities::upload_file_by_url(
+          //   $pexelsPhoto,
+          //   sanitize_title( $aiImagesData[$index]->alt ),
+          //   $lastSegment
+          // );
 
-          if( !$photo ) { continue; }
+          // if( !$photo ) { continue; }
 
           // featured image first photo.
           if( !$featuredImage ) {
-            $featuredImage = $photo;
+            $featuredImage = true;
           }
           
           $content = str_replace(
             $image['url'],
-            wp_get_attachment_url( $photo ),
+            $pexelsPhoto,
             $content
           );
+
+          as_enqueue_async_action( 
+            "adiosgenerator_upload_stock_photo_replace", 
+            [ 
+              "post_id" => $postId,
+              "stock_photo" => $pexelsPhoto,
+              "last_photo" => $image['url'],
+              "alt" => $aiImagesData[$index]->alt,
+              "filename" => $this->getPexelsFileName( $pexelsPhoto ),
+              "is_featured_image" => $featuredImage
+            ], 
+            $this->getScheduleGroup(),
+            true
+          );
+
         }
       }
     }
 
     // set featured image
-    if( $featuredImage ) {
-      set_post_thumbnail($postId, $featuredImage);
-    }
+    // if( $featuredImage ) {
+    //   // set_post_thumbnail($postId, $featuredImage);
+    //   as_enqueue_async_action( 
+    //     "adiosgenerator_post_thumbnail", 
+    //     [ 
+    //       "post_id" => $postId,
+    //       "stock_photo" => $featuredImage['photo'],
+    //       "alt" => $featuredImage['alt'],
+    //       "filename" => $featuredImage['filename']
+    //     ], 
+    //     $this->getScheduleGroup(),
+    //     true
+    //   );
+    // }
 
 
     // process videos if exists
@@ -163,22 +189,34 @@ class StockPhotos extends Generate {
             
           if( empty( $vidURL ) ) { continue; }
           
-          $pexelsUrlPath = parse_url($aiVideosData[$index]->url, PHP_URL_PATH);
-          $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
-          $lastSegment = end($pexelsUrlPathSegments);
+          // $pexelsUrlPath = parse_url($aiVideosData[$index]->url, PHP_URL_PATH);
+          // $pexelsUrlPathSegments = explode('/', trim($pexelsUrlPath, '/'));
+          // $lastSegment = end($pexelsUrlPathSegments);
 
-          $video = GeneratorUtilities::upload_file_by_url(
-            $vidURL,
-            null,
-            $lastSegment
+          // $video = GeneratorUtilities::upload_file_by_url(
+          //   $vidURL,
+          //   null,
+          //   $lastSegment
+          // );
+
+          // if( !$video ) { continue; }
+          // $content = str_replace(
+          //   $vid['url'],
+          //   wp_get_attachment_url( $video ),
+          //   $content
+          // );
+          as_enqueue_async_action( 
+            "adiosgenerator_upload_stock_video_replace", 
+            [ 
+              "post_id" => $postId,
+              "stock_video" => $aiVideosData[$index]->url,
+              "last_video" => $vid['url'],
+              "filename" => $this->getPexelsFileName( $aiVideosData[$index]->url )
+            ], 
+            $this->getScheduleGroup(),
+            true
           );
 
-          if( !$video ) { continue; }
-          $content = str_replace(
-            $vid['url'],
-            wp_get_attachment_url( $video ),
-            $content
-          );
         }
       }
     }
