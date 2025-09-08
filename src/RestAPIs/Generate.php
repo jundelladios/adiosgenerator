@@ -15,9 +15,9 @@ class Generate extends GeneratorREST {
       \WebGenerator\Generate\Logos::class,
       \WebGenerator\Generate\ProcessContent::class,
       \WebGenerator\Generate\ServicesPages::class,
-      \WebGenerator\Generate\StockPhotos::class,
       \WebGenerator\Generate\AIContents::class,
       \WebGenerator\Generate\SEOPages::class,
+      \WebGenerator\Generate\StockPhotos::class,
       \WebGenerator\Generate\Finalize::class
     );
   }
@@ -57,40 +57,49 @@ class Generate extends GeneratorREST {
       ));
     });
 
-    add_action( 'adiosgenerator_generate_execute', array( $this, 'executeAll' ));
-    add_action( 'adiosgenerator_upload_stock_photo_replace', array( $this, 'upload_stock_photo_replace' ));
-    add_action( 'adiosgenerator_upload_stock_video_replace', array( $this, 'upload_stock_video_replace' ));
+    add_action( 'adiosgenerator_generate_execute', array( $this, 'executeAll' ), 10, 2);
+    add_action( 'adiosgenerator_upload_stock_photo_replace', array( $this, 'upload_stock_photo_replace' ), 10, 1);
+    add_action( 'adiosgenerator_upload_stock_video_replace', array( $this, 'upload_stock_video_replace' ), 10, 2);
+    add_action( 'adiosgenerator_post_thumbnail', array( $this, 'sync_post_thumbnail' ), 10, 1);
+  }
+
+  public function sync_post_thumbnail( $args ) {
+    $post_id = $args['post_id'] ?? 0;
+    $stock_photo = $args['stock_photo'] ?? '';
+    $alt = $args['alt'] ?? '';
+    $filename = $args['filename'] ?? '';
+    
+    if( ! $post_id || ! $stock_photo || ! $alt || ! $filename ) {
+      return;
+    }
+
+    $attachment_id = GeneratorUtilities::upload_file_by_url(
+      $stock_photo,
+      $alt,
+      $filename
+    );
+
+    if( ! $attachment_id ) {
+      return;
+    }
+
+    set_post_thumbnail($post_id, $attachment_id);
+    update_post_meta($attachment_id, '_wp_attachment_image_alt', $alt);
   }
 
   /**
    * Handles replacing a stock photo in a post's content and optionally setting it as the featured image.
    *
-   * @param array $args {
-   *   @type string  $post_id           The ID of the post to update.
-   *   @type string  $stock_photo       The URL of the new stock photo.
-   *   @type string  $last_photo        The URL of the photo to be replaced.
-   *   @type string  $alt               The alt text for the new photo.
-   *   @type string  $filename          The filename for the new photo.
-   *   @type bool    $is_featured_image Whether to set as featured image.
-   * }
    */
   public function upload_stock_photo_replace( $args ) {
-    if (
-      !is_array($args) ||
-      empty($args['post_id']) ||
-      empty($args['stock_photo']) ||
-      empty($args['last_photo'])
-    ) {
-      return;
-    }
-
-    $post_id = $args['post_id'];
-    $stock_photo = $args['stock_photo'];
-    $last_photo = $args['last_photo'];
-    $alt = isset($args['alt']) ? $args['alt'] : '';
-    $filename = isset($args['filename']) ? $args['filename'] : '';
-    $is_featured_image = !empty($args['is_featured_image']);
-
+    // Extract arguments from the array passed by as_enqueue_async_action
+    $post_id = $args['post_id'] ?? 0;
+    $stock_photo = $args['stock_photo'] ?? '';
+    $last_photo = $args['last_photo'] ?? '';
+    $alt = $args['alt'] ?? '';
+    $filename = $args['filename'] ?? '';
+    $is_featured_image = $args['is_featured_image'] ?? false;
+    
     // Download and upload the new stock photo to the media library
     $attachment_id = GeneratorUtilities::upload_file_by_url(
       $stock_photo,
@@ -109,9 +118,7 @@ class Generate extends GeneratorREST {
         ]);
       }
 
-      if (class_exists('ET_Core_PageResource')) {
-        \ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
-      }
+      ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
 
       return;
     }
@@ -138,9 +145,7 @@ class Generate extends GeneratorREST {
     }
 
     // Remove static resources cache for this post
-    if (class_exists('ET_Core_PageResource')) {
-      \ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
-    }
+    ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
 
     return true;
   }
@@ -149,12 +154,6 @@ class Generate extends GeneratorREST {
   /**
    * Handles replacing stock videos and upload with the given args.
    *
-   * @param array $args {
-   *   @type int    $post_id     The post ID.
-   *   @type string $stock_video The new stock video URL.
-   *   @type string $last_video  The old video URL to be replaced.
-   *   @type string $filename    The filename for the new video.
-   * }
    */
   public function upload_stock_video_replace( $args ) {
     $post_id     = $args['post_id']     ?? 0;
@@ -185,9 +184,7 @@ class Generate extends GeneratorREST {
         ] );
       }
 
-      if ( class_exists( 'ET_Core_PageResource' ) ) {
-        \ET_Core_PageResource::do_remove_static_resources( $post_id, 'all' );
-      }
+      ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
 
       return;
     }
@@ -204,9 +201,7 @@ class Generate extends GeneratorREST {
     }
 
     // Remove static resources cache for this post
-    if ( class_exists( 'ET_Core_PageResource' ) ) {
-      \ET_Core_PageResource::do_remove_static_resources( $post_id, 'all' );
-    }
+    ET_Core_PageResource::do_remove_static_resources($post_id, 'all');
 
     return true;
   }

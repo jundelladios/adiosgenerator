@@ -30,6 +30,10 @@ class Finalize extends Generate {
       wp_delete_comment($comment->comment_ID, true);
     }
 
+    et_update_option( 'et_pb_static_css_file', 'on' );
+
+    do_action( 'wphb_clear_page_cache' );
+
     // clear cache
     wp_cache_flush();
 

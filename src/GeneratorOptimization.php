@@ -112,12 +112,10 @@ class GeneratorOptimization {
       }
 
       <?php if( $this->is_optimize()): ?>
-      div.et_pb_section.et_pb_with_background:not(.loaded),
-      div.et_pb_section:not(.loaded) .et_pb_with_background,
-      div.et_pb_section:not(.loaded) .et_pb_slide,
-      div.et_pb_section.et_pb_with_background.no-lazyload,
-      div.et_pb_section.no-lazyload .et_pb_slide:nth-child(1),
-      div.et_pb_section.no-lazyload .et_pb_slide:not(.et-pb-active-slide) {
+      .et_pb_section.et_pb_with_background:not(.loaded):not(.no-lazyload),
+      .et_pb_section:not(.loaded):not(.no-lazyload) .et_pb_with_background,
+      .et_pb_section:not(.loaded):not(.no-lazyload) .et_pb_slide
+      {
         background-image: unset!important;
       }
       div.et_pb_section.et_pb_with_background.no-lazyload {
@@ -168,7 +166,7 @@ class GeneratorOptimization {
 
     $content = $this->google_fonts_optimization( $content );
     $content = $this->force_opt_style_loader( $content );
-    $content = $this->force_atf_lcp_background( $content );
+    // $content = $this->force_atf_lcp_background( $content );
     $content = $this->replace_imgs_under_no_lazyload( $content);
 
     $content = $this->force_cached_inlined_style_header( $content );
@@ -259,124 +257,129 @@ class GeneratorOptimization {
   }
 
 
+  public function background_image_set( $content ) {
+    
+  }
+
+
   /**
    * Background images for ATF LCP
    *
    * @param [type] $content
    * @return void
    */
-  public function force_atf_lcp_background( $content ) {
+  // public function force_atf_lcp_background( $content ) {
     
-    // Get all HTML elements that have both 'et_pb_section' and 'no-lazyload' classes, in any order
-    preg_match_all(
-        '/<([a-zA-Z0-9]+)([^>]*\sclass=["\'][^"\'>]*\b(et_pb_section)\b[^"\'>]*\b(no-lazyload)\b[^"\'>]*["\'][^>]*)>/i',
-        $content,
-        $matches,
-        PREG_OFFSET_CAPTURE
-    );
+  //   // Get all HTML elements that have both 'et_pb_section' and 'no-lazyload' classes, in any order
+  //   preg_match_all(
+  //       '/<([a-zA-Z0-9]+)([^>]*\sclass=["\'][^"\'>]*\b(et_pb_section)\b[^"\'>]*\b(no-lazyload)\b[^"\'>]*["\'][^>]*)>/i',
+  //       $content,
+  //       $matches,
+  //       PREG_OFFSET_CAPTURE
+  //   );
 
-    // You can now use $child_contents as needed, e.g. for further processing or debugging
-    // $matches[0] will contain the full matched tags
-    // $matches[1] will contain the tag names
-    // $matches[2] will contain the attributes
-    foreach( $matches[0] as $tags ) {
-      foreach( $tags as $tag ) {
-        // Get the class attribute value of the tag
-        $class_value = "";
-        if (preg_match('/class\s*=\s*([\'"])(.*?)\1/i', $tag, $class_match)) {
-          $class_value = $class_match[2];
-          // You can use $class_value as needed
-        }
+  //   // You can now use $child_contents as needed, e.g. for further processing or debugging
+  //   // $matches[0] will contain the full matched tags
+  //   // $matches[1] will contain the tag names
+  //   // $matches[2] will contain the attributes
+  //   foreach( $matches[0] as $tags ) {
+  //     foreach( $tags as $tag ) {
+  //       // Get the class attribute value of the tag
+  //       $class_value = "";
+  //       if (preg_match('/class\s*=\s*([\'"])(.*?)\1/i', $tag, $class_match)) {
+  //         $class_value = $class_match[2];
+  //         // You can use $class_value as needed
+  //       }
 
-       // Get all child contents from this matched tag
-       // Find the position of this tag in the content
-       $tag_offset = strpos($content, $tag);
-       if ($tag_offset !== false) {
-         // Find the end of the opening tag
-         $open_tag_end = $tag_offset + strlen($tag);
-         // Try to get the tag name
-         if (preg_match('/^<\s*([a-z0-9\-]+)/i', $tag, $tagname_match)) {
-           $tag_name = $tagname_match[1];
-           $close_tag = '</' . $tag_name . '>';
-           // Find the closing tag position
-           $close_tag_pos = stripos($content, $close_tag, $open_tag_end);
-           if ($close_tag_pos !== false) {
-             // Extract the child content between open_tag_end and close_tag_pos
-             $child_content = substr($content, $open_tag_end, $close_tag_pos - $open_tag_end);
+  //      // Get all child contents from this matched tag
+  //      // Find the position of this tag in the content
+  //      $tag_offset = strpos($content, $tag);
+  //      if ($tag_offset !== false) {
+  //        // Find the end of the opening tag
+  //        $open_tag_end = $tag_offset + strlen($tag);
+  //        // Try to get the tag name
+  //        if (preg_match('/^<\s*([a-z0-9\-]+)/i', $tag, $tagname_match)) {
+  //          $tag_name = $tagname_match[1];
+  //          $close_tag = '</' . $tag_name . '>';
+  //          // Find the closing tag position
+  //          $close_tag_pos = stripos($content, $close_tag, $open_tag_end);
+  //          if ($close_tag_pos !== false) {
+  //            // Extract the child content between open_tag_end and close_tag_pos
+  //            $child_content = substr($content, $open_tag_end, $close_tag_pos - $open_tag_end);
             
-            // Find the first child element with class "et_pb_slide et_pb_slide_{number}" and get the slide number
-            if (preg_match('/<div[^>]*class=["\'][^"\']*\bet_pb_slide\b[^"\']*\bet_pb_slide_(\d+)\b[^"\']*["\'][^>]*>/i', $child_content, $slide_match)) {
-              $slide_tag = $slide_match[0];
+  //           // Find the first child element with class "et_pb_slide et_pb_slide_{number}" and get the slide number
+  //           if (preg_match('/<div[^>]*class=["\'][^"\']*\bet_pb_slide\b[^"\']*\bet_pb_slide_(\d+)\b[^"\']*["\'][^>]*>/i', $child_content, $slide_match)) {
+  //             $slide_tag = $slide_match[0];
 
-              if (preg_match('/\bdata-slide-id=(["\'])(.*?)\1/i', $slide_tag, $matchslide_id)) {
-                if( empty( $matchslide_id[2] )) { continue; }
-                // Find <style> blocks in the content (typically in the header)
-                if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $content, $style_blocks)) {
-                  foreach ($style_blocks[1] as $css) {
-                    // Look for a CSS rule targeting the slide id as a class, e.g. .et_pb_slide_0 { background-image: url("..."); }
-                    $pattern = '/\.' . preg_quote($matchslide_id[2], '/') . '\s*\{[^}]*background-image\s*:\s*url\((["\']?)(.*?)\1\)/is';
-                    if (preg_match($pattern, $css, $bg_match)) {
-                      $bg_url = $bg_match[2];
+  //             if (preg_match('/\bdata-slide-id=(["\'])(.*?)\1/i', $slide_tag, $matchslide_id)) {
+  //               if( empty( $matchslide_id[2] )) { continue; }
+  //               // Find <style> blocks in the content (typically in the header)
+  //               if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $content, $style_blocks)) {
+  //                 foreach ($style_blocks[1] as $css) {
+  //                   // Look for a CSS rule targeting the slide id as a class, e.g. .et_pb_slide_0 { background-image: url("..."); }
+  //                   $pattern = '/\.' . preg_quote($matchslide_id[2], '/') . '\s*\{[^}]*background-image\s*:\s*url\((["\']?)(.*?)\1\)/is';
+  //                   if (preg_match($pattern, $css, $bg_match)) {
+  //                     $bg_url = $bg_match[2];
 
-                      $image_id = attachment_url_to_postid( $bg_url );
-                      if( $image_id ) {
-                        $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
-                          'class' => 'bg-image-replaced-atf',
-                          'loading' => 'eager',
-                          'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
-                        ]);
+  //                     $image_id = attachment_url_to_postid( $bg_url );
+  //                     if( $image_id ) {
+  //                       $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
+  //                         'class' => 'bg-image-replaced-atf',
+  //                         'loading' => 'eager',
+  //                         'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
+  //                       ]);
 
-                        $content = str_replace( $slide_tag, $slide_tag . $img_tag, $content );
-                      }
+  //                       $content = str_replace( $slide_tag, $slide_tag . $img_tag, $content );
+  //                     }
 
-                      break;
-                    }
-                  }
-                }
-              }
+  //                     break;
+  //                   }
+  //                 }
+  //               }
+  //             }
 
-            }
+  //           }
 
-          }
-         }
-       }
+  //         }
+  //        }
+  //      }
 
-        // Check if $class_value contains a class like et_pb_section_{number}
-        if (preg_match('/\bet_pb_section_(\d+)\b/', $class_value, $section_match)) {
-          // $section_match[0] contains the full class name, e.g., et_pb_section_3
-          $matched_class = $section_match[0];
+  //       // Check if $class_value contains a class like et_pb_section_{number}
+  //       if (preg_match('/\bet_pb_section_(\d+)\b/', $class_value, $section_match)) {
+  //         // $section_match[0] contains the full class name, e.g., et_pb_section_3
+  //         $matched_class = $section_match[0];
 
-          // Find the <style> blocks in the content (typically in the header)
-          if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $content, $style_blocks)) {
-            foreach ($style_blocks[1] as $css) {
-              // Look for a CSS rule targeting .$matched_class with background-image
-              // e.g. .et_pb_section_3 { background-image: url("..."); }
-              $pattern = '/\.' . preg_quote($matched_class, '/') . '\s*\{[^}]*background-image\s*:\s*url\((["\']?)(.*?)\1\)/is';
-              if (preg_match($pattern, $css, $bg_match)) {
-                $bg_url = $bg_match[2];
+  //         // Find the <style> blocks in the content (typically in the header)
+  //         if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $content, $style_blocks)) {
+  //           foreach ($style_blocks[1] as $css) {
+  //             // Look for a CSS rule targeting .$matched_class with background-image
+  //             // e.g. .et_pb_section_3 { background-image: url("..."); }
+  //             $pattern = '/\.' . preg_quote($matched_class, '/') . '\s*\{[^}]*background-image\s*:\s*url\((["\']?)(.*?)\1\)/is';
+  //             if (preg_match($pattern, $css, $bg_match)) {
+  //               $bg_url = $bg_match[2];
   
-                $image_id = attachment_url_to_postid( $bg_url );
-                if( $image_id ) {
-                  $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
-                    'class' => 'bg-image-replaced-atf',
-                    'loading' => 'eager',
-                    'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
-                 ]);
+  //               $image_id = attachment_url_to_postid( $bg_url );
+  //               if( $image_id ) {
+  //                 $img_tag = wp_get_attachment_image( $image_id, 'full', false, [
+  //                   'class' => 'bg-image-replaced-atf',
+  //                   'loading' => 'eager',
+  //                   'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
+  //                ]);
 
-                 $content = str_replace( $tag, $tag . $img_tag, $content );
-                }
+  //                $content = str_replace( $tag, $tag . $img_tag, $content );
+  //               }
 
-                break;
-              }
-            }
-          }
-        }
+  //               break;
+  //             }
+  //           }
+  //         }
+  //       }
 
-      }
-    }
+  //     }
+  //   }
       
-    return $content;
-  }
+  //   return $content;
+  // }
 
   /**
    * Preconnect third parties

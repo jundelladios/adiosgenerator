@@ -156,18 +156,22 @@ class ProcessContent extends Generate {
    * @return void
    */
   public function dynamic_footer_sitename_replace( $content, $placeholder="", $sitename="" ) {
-    $content = wp_unslash( $content );
-    $dynamic_contents = et_builder_get_dynamic_contents($content);
-    foreach ( $dynamic_contents as $dynamic_item ) {
-      $dynamic_item_parsed = et_builder_parse_dynamic_content( $dynamic_item );
-      $after_content = $dynamic_item_parsed->get_settings( 'after' );
-      if ( $after_content !== '' ) {
-        $dynamic_item_parsed->set_settings( 'after', str_replace( $placeholder, $sitename, $after_content ?? "" ) );
-        $re_serialized_dynamic_item = $dynamic_item_parsed->serialize();
-        $content = str_replace( $dynamic_item, $re_serialized_dynamic_item, $content);
+    try {
+      $content = wp_unslash( $content );
+      $dynamic_contents = et_builder_get_dynamic_contents($content);
+      foreach ( $dynamic_contents as $dynamic_item ) {
+        $dynamic_item_parsed = et_builder_parse_dynamic_content( $dynamic_item );
+        $after_content = $dynamic_item_parsed->get_settings( 'after' );
+        if ( $after_content !== '' ) {
+          $dynamic_item_parsed->set_settings( 'after', str_replace( $placeholder, $sitename, $after_content ?? "" ) );
+          $re_serialized_dynamic_item = $dynamic_item_parsed->serialize();
+          $content = str_replace( $dynamic_item, $re_serialized_dynamic_item, $content);
+        }
       }
+      return wp_slash( $content );
+    } catch( \Exception $e ) {
+      return $content;
     }
-    return wp_slash( $content );
   }
 
 

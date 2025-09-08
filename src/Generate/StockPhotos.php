@@ -54,11 +54,11 @@ class StockPhotos extends Generate {
     $excludedImageURLstemplate = $apidata->client->template->ex_ai_images;
     $replacement_domain = home_url();
     $updated_temp_exclude_urls = array_map(function($url) use ($replacement_domain) {
-      return preg_replace('#https://stage-[^/]+\.adios-webgenerator\.com#', $replacement_domain, $url);
+      return preg_replace('#https://[^/]+\.web\.adios-webgenerator\.com#', $replacement_domain, $url);
     }, $excludedImageURLstemplate);
 
     $excludes = array_merge( $excludes, $updated_temp_exclude_urls );
-    
+
     $ret = array();
     $retvids = array();
 
@@ -66,27 +66,67 @@ class StockPhotos extends Generate {
     $postId = $post->ID;
 
     // image processing
-    preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(jpg|jpeg|png|webp|avif)/i', $post->post_content, $imgurls);
+    preg_match_all(
+        '/https?:\/\/[^\s"\')>]+?\.(jpg|jpeg|png|webp|avif)(\?[^"\')\s>]*)?/i',
+        $content,
+        $imgurls
+    );
+
+
     foreach( $imgurls[0] as $imgurl ) {
       $urlpostid = attachment_url_to_postid( $imgurl );
-      if( $urlpostid && !in_array( $imgurl, $excludes ) ) {
+      if( in_array( $imgurl, $excludes ) ) {
+        continue;
+      }
+
+      if( $urlpostid ) {
         $meta = wp_get_attachment_metadata( $urlpostid );
         $ret[] = array(
           "urlpostid" => $urlpostid,
           "url" => $imgurl,
-          "width" =>$meta['width'] ?? 0,
-          "height" => $meta['height'] ?? 0
+          "width" =>$meta['width'] ?? 1920,
+          "height" => $meta['height'] ?? 1080
+        );
+      } else {
+        $ret[] = array(
+          "url" => $imgurl,
+          "width" => (function($url) {
+            $parts = parse_url($url);
+            if (!empty($parts['query'])) {
+              parse_str($parts['query'], $query);
+              if (isset($query['width'])) {
+                return intval($query['width']);
+              }
+            }
+            return 1920;
+          })($imgurl),
+          "height" => (function($url) {
+            $parts = parse_url($url);
+            if (!empty($parts['query'])) {
+              parse_str($parts['query'], $query);
+              if (isset($query['height'])) {
+                return intval($query['height']);
+              }
+            }
+            return 1080;
+          })($imgurl)
         );
       }
     }
 
     // video processing
-    preg_match_all('/https?:\/\/[^"\')\s>]+\/wp-content\/[^"\')\s>]+\.(mp4|mov|avi|mkv|flv|webm|wmv|3gp|ogv)/i', $post->post_content, $vidurls);
+    preg_match_all(
+        '/https?:\/\/[^\s"\')>]+?\.(mp4|mov|avi|mkv|flv|webm|wmv|3gp|ogv)(\?[^"\')\s>]*)?/i',
+        $content,
+        $vidurls
+    );
     foreach( $vidurls[0] as $vidurl ) {
-      $urlpostid = attachment_url_to_postid( $vidurl );
+      if( in_array( $vidurl, $excludes ) ) {
+        continue;
+      }
+
       $retvids[] = array(
-        "urlpostid" => $urlpostid,
-        "url" => $vidurl
+        'url' => $vidurl
       );
     }
 
@@ -123,7 +163,11 @@ class StockPhotos extends Generate {
 
           // featured image first photo.
           if( !$featuredImage ) {
-            $featuredImage = true;
+            $featuredImage = array(
+              "photo" => $pexelsPhoto,
+              "alt" => $aiImagesData[$index]->alt,
+              "filename" => $this->getPexelsFileName( $pexelsPhoto )
+            );
           }
           
           $content = str_replace(
@@ -131,19 +175,21 @@ class StockPhotos extends Generate {
             $pexelsPhoto,
             $content
           );
-
-          as_enqueue_async_action( 
+          
+          as_enqueue_async_action(
             "adiosgenerator_upload_stock_photo_replace", 
-            [ 
-              "post_id" => $postId,
-              "stock_photo" => $pexelsPhoto,
-              "last_photo" => $image['url'],
-              "alt" => $aiImagesData[$index]->alt,
-              "filename" => $this->getPexelsFileName( $pexelsPhoto ),
-              "is_featured_image" => $featuredImage
-            ], 
+            array(
+              "args" => array(
+                "post_id" => $postId,
+                "stock_photo" => $pexelsPhoto,
+                "last_photo" => $image['url'],
+                "alt" => $aiImagesData[$index]->alt,
+                "filename" => $this->getPexelsFileName( $pexelsPhoto ),
+                "is_featured_image" => $featuredImage
+              )
+            ), 
             $this->getScheduleGroup(),
-            true
+            false
           );
 
         }
@@ -151,20 +197,22 @@ class StockPhotos extends Generate {
     }
 
     // set featured image
-    // if( $featuredImage ) {
-    //   // set_post_thumbnail($postId, $featuredImage);
-    //   as_enqueue_async_action( 
-    //     "adiosgenerator_post_thumbnail", 
-    //     [ 
-    //       "post_id" => $postId,
-    //       "stock_photo" => $featuredImage['photo'],
-    //       "alt" => $featuredImage['alt'],
-    //       "filename" => $featuredImage['filename']
-    //     ], 
-    //     $this->getScheduleGroup(),
-    //     true
-    //   );
-    // }
+    if( $featuredImage ) {
+      // set_post_thumbnail($postId, $featuredImage);
+      as_enqueue_async_action( 
+        "adiosgenerator_post_thumbnail", 
+        array(
+          "args" => array(
+            "post_id" => $postId,
+            "stock_photo" => $featuredImage['photo'],
+            "alt" => $featuredImage['alt'],
+            "filename" => $featuredImage['filename']
+          )
+        ), 
+        $this->getScheduleGroup(),
+        true
+      );
+    }
 
 
     // process videos if exists
@@ -207,12 +255,14 @@ class StockPhotos extends Generate {
           // );
           as_enqueue_async_action( 
             "adiosgenerator_upload_stock_video_replace", 
-            [ 
-              "post_id" => $postId,
-              "stock_video" => $aiVideosData[$index]->url,
-              "last_video" => $vid['url'],
-              "filename" => $this->getPexelsFileName( $aiVideosData[$index]->url )
-            ], 
+            array(
+              "args" => array(
+                "post_id" => $postId,
+                "stock_video" => $aiVideosData[$index]->url,
+                "last_video" => $vid['url'],
+                "filename" => $this->getPexelsFileName( $aiVideosData[$index]->url )
+              )
+            ),
             $this->getScheduleGroup(),
             true
           );
@@ -220,6 +270,9 @@ class StockPhotos extends Generate {
         }
       }
     }
+
+
+
 
     wp_update_post([
       'ID' => $postId,
