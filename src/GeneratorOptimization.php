@@ -164,18 +164,18 @@ class GeneratorOptimization {
     $content = $this->force_non_prio_images( $content );
     $content = $this->force_remove_preloading_mistakes( $content );
 
-    $content = $this->google_fonts_optimization( $content );
-    $content = $this->force_opt_style_loader( $content );
+    // $content = $this->google_fonts_optimization( $content );
+    // $content = $this->force_opt_style_loader( $content );
     // $content = $this->force_atf_lcp_background( $content );
     $content = $this->replace_imgs_under_no_lazyload( $content);
 
-    $content = $this->force_cached_inlined_style_header( $content );
+    // $content = $this->force_cached_inlined_style_header( $content );
 
     // $content = $this->force_delay_javascripts( $content );
     $content = $this->lazyload_iframes_with_placeholders( $content );
     // $content = $this->lazyload_img_with_placeholders( $content );
     
-    $content = $this->delay_divi_custom_script_js( $content );
+    // $content = $this->delay_divi_custom_script_js( $content );
 
     apply_filters( 'diva_generator_after_process_content', $content );
     return $content;
@@ -488,7 +488,7 @@ class GeneratorOptimization {
           if ( strpos( $img_tag, 'loading=' ) !== false ) {
             $img_tag = preg_replace( '/loading=["\']lazy["\']/', 'loading="eager"', $img_tag );
           } else {
-            $img_tag = str_replace( '<img', '<img loading="eager"', $img_tag );
+            $img_tag = str_replace( '<img', '<img loading="eager" decoding="async" ', $img_tag );
           }
           return $img_tag;
         },
@@ -517,7 +517,7 @@ class GeneratorOptimization {
           if ( strpos( $img_tag, 'loading=' ) !== false ) {
             $img_tag = preg_replace( '/loading=["\']eager["\']/', 'loading="lazy"', $img_tag );
           } else {
-            $img_tag = str_replace( '<img', '<img loading="lazy"', $img_tag );
+            $img_tag = str_replace( '<img', '<img loading="lazy" decoding="async" ', $img_tag );
           }
           
           return $img_tag;
