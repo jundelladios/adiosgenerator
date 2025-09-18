@@ -6,6 +6,7 @@ use WebGenerator\RestAPIs\Generate;
 
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorUtilities;
+use WebGenerator\GeneratorDiviLoader;
 use ET_Core_PageResource;
 
 class AIContents extends Generate {
@@ -25,6 +26,9 @@ class AIContents extends Generate {
     * @return void
     */
   public function execute() {
+    // Ensure Divi classes are loaded for scheduled actions
+    GeneratorDiviLoader::ensure_divi_classes_loaded();
+    
     $apidata = $this->get_client();
     $posts = get_posts(array(
       'posts_per_page' => -1,

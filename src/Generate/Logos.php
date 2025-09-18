@@ -5,6 +5,7 @@ namespace WebGenerator\Generate;
 use WebGenerator\RestAPIs\Generate;
 
 use WebGenerator\GeneratorUtilities;
+use WebGenerator\GeneratorDiviLoader;
 use ET_Core_PageResource;
 
 class Logos extends Generate {
@@ -20,6 +21,9 @@ class Logos extends Generate {
   }
 
   public function execute() {
+    // Ensure Divi classes are loaded for scheduled actions
+    GeneratorDiviLoader::ensure_divi_classes_loaded();
+    
     $logo = $this->logo();
     $secondary = $this->secondary_logo();
     $favicon = $this->favicon();

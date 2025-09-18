@@ -50,16 +50,39 @@ class GeneratorCache {
    * @return void
    */
   public static function clear_cache() {
-    # clear cache humingbird
+    // Clear Hummingbird cache
     do_action( 'wphb_clear_page_cache' );
-    
-    if(class_exists("ET_Core_PageResource")) {
-      ET_Core_PageResource::remove_static_resources( "all", "all" );
-      et_core_clear_transients();
-      et_core_clear_wp_cache();
+
+    // Divi cache clear: ensure classes are loaded, especially for WP CLI context
+    if ( ! class_exists( 'ET_Core_PageResource' ) ) {
+      // Try to load Divi classes if not already loaded (for WP CLI or non-standard contexts)
+      if ( function_exists( 'get_template_directory' ) ) {
+        $core_dir = get_template_directory() . '/includes/core/';
+        $core_file = $core_dir . 'class-et-core-page-resource.php';
+        if ( file_exists( $core_file ) ) {
+          require_once $core_file;
+        }
+      }
     }
 
-    # clear object cache
-    wp_cache_flush();
+    if ( class_exists( 'ET_Core_PageResource' ) ) {
+      // Use do_remove_static_resources for better compatibility (static method)
+      if ( method_exists( 'ET_Core_PageResource', 'do_remove_static_resources' ) ) {
+        ET_Core_PageResource::do_remove_static_resources( null, 'all' );
+      } elseif ( method_exists( 'ET_Core_PageResource', 'remove_static_resources' ) ) {
+        ET_Core_PageResource::remove_static_resources( 'all', 'all' );
+      }
+      if ( function_exists( 'et_core_clear_transients' ) ) {
+        et_core_clear_transients();
+      }
+      if ( function_exists( 'et_core_clear_wp_cache' ) ) {
+        et_core_clear_wp_cache();
+      }
+    }
+
+    // Clear object cache
+    if ( function_exists( 'wp_cache_flush' ) ) {
+      wp_cache_flush();
+    }
   }
 }

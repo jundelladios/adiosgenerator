@@ -6,6 +6,7 @@ use WebGenerator\RestAPIs\Generate;
 
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorAPI;
+use WebGenerator\GeneratorDiviLoader;
 use ET_Core_PageResource;
 
 class StockPhotos extends Generate {
@@ -21,6 +22,9 @@ class StockPhotos extends Generate {
   }
 
   public function execute() {
+    // Ensure Divi classes are loaded for scheduled actions
+    GeneratorDiviLoader::ensure_divi_classes_loaded();
+    
     $apidata = $this->get_client();
     $posts = $this->get_posts_content_generate();
     foreach( $posts as $post ) {

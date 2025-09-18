@@ -6,6 +6,7 @@ use WebGenerator\RestAPIs\Generate;
 
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorProcessContent;
+use WebGenerator\GeneratorDiviLoader;
 use ET_Core_PageResource;
 use ET_Builder_Module_Social_Media_Follow_Item;
 
@@ -27,6 +28,9 @@ class ProcessContent extends Generate {
   }
 
   public function runExecute() {
+    // Ensure Divi classes are loaded for scheduled actions
+    GeneratorDiviLoader::ensure_divi_classes_loaded();
+    
     $apidata = $this->get_client();
     $retdata = $apidata->client;
     $placeholder = $apidata->placeholder;
@@ -207,4 +211,5 @@ class ProcessContent extends Generate {
       );
     }
   }
+
 }
