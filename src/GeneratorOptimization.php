@@ -172,6 +172,7 @@ class GeneratorOptimization {
     // $content = $this->force_cached_inlined_style_header( $content );
 
     // $content = $this->force_delay_javascripts( $content );
+
     $content = $this->lazyload_iframes_with_placeholders( $content );
     // $content = $this->lazyload_img_with_placeholders( $content );
     
@@ -596,7 +597,7 @@ class GeneratorOptimization {
     if (!empty($matches[1])) { $handle = $handlmatch[1]; }
 
     $assetLink = $matches[1];
-    return '<link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" as="print" onload="this.media=\'all\';" />
+    return '<link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" media="print" onload="this.media=\'all\';" />
     <noscript><link href="' . esc_url($assetLink) . '"  rel="stylesheet" id="' . $handle . '" /></noscript>';
   }
 
