@@ -14,6 +14,14 @@ class SocialMediaItems extends GeneratorREST {
         'permission_callback' => array( $this, 'authorize' )
       ));
     });
+
+    // Add WP-CLI command for social media items
+    if ( defined('WP_CLI') && WP_CLI ) {
+      \WP_CLI::add_command('adiosgenerator social-media-items', function() {
+        $instance = new \WebGenerator\RestAPIs\SocialMediaItems();
+        $instance->load();
+      });
+    }
   }
 
   public function load() {

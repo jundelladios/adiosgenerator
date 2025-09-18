@@ -14,6 +14,14 @@ class SyncTemplate extends GeneratorREST {
         'permission_callback' => array( $this, 'authorize' )
       ));
     });
+
+    // Add WP-CLI command for template sync
+    if ( defined('WP_CLI') && WP_CLI ) {
+      \WP_CLI::add_command('adiosgenerator template-sync', function() {
+        $instance = new \WebGenerator\RestAPIs\SyncTemplate();
+        $instance->load();
+      });
+    }
   }
 
   public function load() {

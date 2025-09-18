@@ -55,12 +55,29 @@ class Generate extends GeneratorREST {
         'callback' => array( $this, "status" ),
         'permission_callback' => '__return_true'
       ));
+
     });
 
     add_action( 'adiosgenerator_generate_execute', array( $this, 'executeAll' ), 10, 2);
     add_action( 'adiosgenerator_upload_stock_photo_replace', array( $this, 'upload_stock_photo_replace' ), 10, 1);
     add_action( 'adiosgenerator_upload_stock_video_replace', array( $this, 'upload_stock_video_replace' ), 10, 2);
     add_action( 'adiosgenerator_post_thumbnail', array( $this, 'sync_post_thumbnail' ), 10, 1);
+
+
+    // WP-CLI versions for these endpoints (no args)
+    if ( defined('WP_CLI') && WP_CLI ) {
+      \WP_CLI::add_command('adiosgenerator generate', function() {
+        $instance = new \WebGenerator\RestAPIs\Generate();
+        $instance->executeAll(null);
+        \WP_CLI::success('Generation triggered via WP-CLI.');
+      });
+
+      \WP_CLI::add_command('adiosgenerator generate-status', function() {
+        $instance = new \WebGenerator\RestAPIs\Generate();
+        $status = $instance->status(null);
+        \WP_CLI::line( is_array($status) || is_object($status) ? json_encode($status) : $status );
+      });
+    }
   }
 
   public function sync_post_thumbnail( $args ) {

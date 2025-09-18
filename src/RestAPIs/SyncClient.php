@@ -15,6 +15,15 @@ class SyncClient extends GeneratorREST {
         'permission_callback' => array( $this, 'authorize' )
       ));
     });
+
+
+    // Add WP-CLI command for client sync
+    if ( defined('WP_CLI') && WP_CLI ) {
+      \WP_CLI::add_command('adiosgenerator client-sync', function() {
+        $instance = new \WebGenerator\RestAPIs\SyncClient();
+        $instance->load();
+      });
+    }
   }
 
   public function load() {

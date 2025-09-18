@@ -16,6 +16,21 @@ class InitTemplate extends GeneratorREST {
         'permission_callback' => array( $this, 'authorize' )
       ));
     });
+
+    // Add WP-CLI command for template init
+    if ( defined('WP_CLI') && WP_CLI ) {
+      \WP_CLI::add_command('adiosgenerator template-init', function() {
+        $instance = new \WebGenerator\RestAPIs\InitTemplate();
+        $result = $instance->load();
+        if ( is_wp_error($result) ) {
+          \WP_CLI::error( $result->get_error_message() );
+        } elseif ( is_array($result) && isset($result['success']) && !$result['success'] ) {
+          \WP_CLI::error( isset($result['data']['message']) ? $result['data']['message'] : 'Template init failed.' );
+        } else {
+          \WP_CLI::success('App template has been initialized');
+        }
+      });
+    }
   }
 
   public function load() {

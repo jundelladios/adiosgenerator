@@ -51,7 +51,7 @@ class AIContents extends Generate {
   public function allowed_replace( $excludes, $paragraph ) {
     if( empty( $paragraph )) { return false; }
     foreach ($excludes as $word) {
-      if (stripos($paragraph ?? "", $word) !== false) {
+      if ($paragraph !== null && $word !== null && stripos($paragraph, $word) !== false) {
         return false;
       }
     }
