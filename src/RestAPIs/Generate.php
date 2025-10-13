@@ -68,7 +68,7 @@ class Generate extends GeneratorREST {
     if ( defined('WP_CLI') && WP_CLI ) {
       \WP_CLI::add_command('adiosgenerator generate', function() {
         $instance = new \WebGenerator\RestAPIs\Generate();
-        $instance->executeAll(null);
+        $instance->load();
         \WP_CLI::success('Generation triggered via WP-CLI.');
       });
 
