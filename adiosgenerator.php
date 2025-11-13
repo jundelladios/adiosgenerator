@@ -47,7 +47,7 @@ define("ADIOSGENERATOR_PLUGIN_DIR", trailingslashit( plugin_dir_path( __FILE__ )
 if( file_exists( ABSPATH . 'wp-adiosgenerator-config.php' ) ) {
 	require_once ABSPATH . 'wp-adiosgenerator-config.php';
 } else {
-  define("ADIOSGENERATOR_API_URL", "https://adios-webgenerator.com");
+  define("ADIOSGENERATOR_API_URL", "https://web-generator.ad-ios.com");
   define("ADIOSGENERATOR_TUTORIALS_URL", "https://stage-website-template11.server3.adios-staging.com/support/");
 }
 
