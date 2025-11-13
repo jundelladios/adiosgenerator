@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AD-IOS Web Generator
  * Description: Connect your WordPress site to a powerful centralized dashboard for seamless management and monitoring. This plugin enables real-time synchronization between your website and the web generator. 
- * Version: 7.0.18
+ * Version: 7.0.19
  * Text Domain: adiosgenerator
  * Author: AD-IOS Digital Marketing Co.
  * Author URI: https://ad-ios.com/
@@ -13,10 +13,33 @@ defined( 'ABSPATH' ) || die( 'No direct script access allowed!' );
 
 require __DIR__ . '/vendor/autoload.php';
 
-if (!class_exists('ActionScheduler')) {
-  // Load Action Scheduler core manually
-  require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+if ( ! ( defined('WP_CLI') && WP_CLI ) ) {
+    if (!class_exists('ActionScheduler')) {
+      require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+    }
 }
+
+if ( defined('WP_CLI') && WP_CLI ) {
+
+    // Load CLI command class directly
+    $cli_file = __DIR__ . '/src/GeneratorCLIv2.php';
+    if ( file_exists( $cli_file ) ) {
+        require_once $cli_file;
+    }
+
+    // Register adiosgenerator CLI command safely
+    if ( class_exists( '\\WebGenerator\\GeneratorCLIv2' ) ) {
+        WP_CLI::add_command( 'adiosgenerator', '\\WebGenerator\\GeneratorCLIv2' );
+    }
+
+    // Disable Action Scheduler completely to avoid DB row locking
+    add_filter( 'action_scheduler_pre_init', '__return_false' );
+    add_filter( 'action_scheduler_disable_default_queue_runner', '__return_true' );
+    add_filter( 'action_scheduler_queue_runner_interval', '__return_zero' );
+
+    return;
+}
+
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 use WebGenerator\GeneratorCLIv2;
@@ -92,7 +115,9 @@ function adiosgenerator_initialize_sso() {
   $post = isset( $_GET["post"] ) ? $_GET["post"] : "";
   GeneratorSSO::init( $token, $redirect, $post );
 }
-add_action('plugins_loaded', "adiosgenerator_initialize_sso");
+if ( ! ( defined('WP_CLI') && WP_CLI ) ) {
+    add_action('plugins_loaded', "adiosgenerator_initialize_sso");
+}
 
 // process content api
 (new GeneratorREST)->routes();
