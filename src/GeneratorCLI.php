@@ -65,6 +65,14 @@ class GeneratorCLI extends \WP_CLI_Command {
 
     WP_CLI::success( __( 'App client has been initialized', 'adiosgenerator' ) );
     update_option( GeneratorUtilities::et_adiosgenerator_option( 'client_data' ), json_encode( $apidata ) );
+
+    // Automatically re-upload Divi once all processes are done
+    if ( ! get_transient('adiosgenerator_divi_reupload_done') ) {
+        $reupload = new class { use \WebGenerator\WpCliTraits\ReuploadDivi; };
+        $reupload->divi(); // runs the Divi re-upload
+        set_transient('adiosgenerator_divi_reupload_done', 1, DAY_IN_SECONDS); // mark as done for 1 day
+    }
+
   }
 
 
