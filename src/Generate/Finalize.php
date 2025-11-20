@@ -50,21 +50,17 @@ class Finalize extends Generate {
 
     // Automatically re-upload Divi once all processes are done
     if (!get_transient('adiosgenerator_divi_reupload_done')) {
-        error_log("♻ Starting automatic Divi re-upload...");
 
-        // Dynamically call the trait
         $reupload = new class {
             use \WebGenerator\WpCliTraits\ReuploadDivi;
         };
 
-        $reupload->divi(); // Run the Divi re-upload
+        $reupload->divi();
 
         // Mark as done so it doesn't run again
-        set_transient('adiosgenerator_divi_reupload_done', 1, DAY_IN_SECONDS);
-
-        error_log("ℹ Divi re-upload done transient set for 1 day.");
+        set_transient('adiosgenerator_divi_reupload_done', 1, DAY_IN_SECONDS);        
     } else {
-        error_log("ℹ Divi re-upload skipped; already ran recently.");
+      
     }
 
   }
