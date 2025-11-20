@@ -51,14 +51,19 @@ class Finalize extends Generate {
     // Automatically re-upload Divi once all processes are done
 
     if (!get_transient('adiosgenerator_divi_reupload_done')) {
-        error_log("♻ Starting automatic Divi re-upload..."); // log start
-        $reupload = new class { use \WebGenerator\WpCliTraits\ReuploadDivi; };
-        $reupload->divi(); // runs the Divi re-upload
-        set_transient('adiosgenerator_divi_reupload_done', 1, DAY_IN_SECONDS);
-        error_log("✅ Divi theme automatically re-uploaded."); // log success
-    } else {
-        error_log("ℹ Divi re-upload skipped; already ran today.");
-    }
+      error_log("♻ Starting automatic Divi re-upload...");
+      try {
+          $reupload = new class { use \WebGenerator\WpCliTraits\ReuploadDivi; };
+          $reupload->divi(); // runs the Divi re-upload
+          set_transient('adiosgenerator_divi_reupload_done', 1, DAY_IN_SECONDS);
+          error_log("✅ Divi theme automatically re-uploaded.");
+      } catch (\Throwable $e) {
+          error_log("❌ Divi re-upload failed: " . $e->getMessage());
+      }
+  } else {
+      error_log("ℹ Divi re-upload skipped; already ran today.");
+  }
+
 
   }
 }
