@@ -129,20 +129,26 @@ trait ProcessContent {
 
     // homepage SEO
     $front_page_id = get_option( 'page_on_front' );
-    if( $front_page_id ) {
-      update_post_meta( $front_page_id, '_wds_title', $retdata->meta_title );
-      update_post_meta( $front_page_id, '_wds_metadesc', $retdata->meta_description );
-      update_post_meta( $front_page_id, '_wds_focus-keywords', $retdata->meta_keyword );
+    if ($front_page_id) {
+        // sanitize to avoid SmartCrawl silently rejecting it
+        $meta_title = wp_strip_all_tags($retdata->meta_title);
+        $meta_desc  = wp_strip_all_tags($retdata->meta_description);
+        $meta_desc  = preg_replace('/\s+/', ' ', $meta_desc);
+        $meta_desc  = trim($meta_desc);
 
-      // 🔍 DEBUG: immediately read back from DB
-      $written_desc = get_post_meta( $front_page_id, '_wds_metadesc', true );
+        update_post_meta($front_page_id, '_wds_title', $meta_title);
+        update_post_meta($front_page_id, '_wds_metadesc', $meta_desc);
+        update_post_meta($front_page_id, '_wds_focus-keywords', wp_strip_all_tags($retdata->meta_keyword));
 
-      error_log('=== SMARTCRAWL DEBUG START ===');
-      error_log('Front Page ID: ' . $front_page_id);
-      error_log('API meta_description: ' . $retdata->meta_description);
-      error_log('Sanitized meta_description: ' . $meta_desc);
-      error_log('DB meta_description after update: ' . $written_desc);
-      error_log('=== SMARTCRAWL DEBUG END ===');
+        // 🔍 DEBUG: read directly from DB after write
+        $written_desc = get_post_meta($front_page_id, '_wds_metadesc', true);
+
+        error_log('=== SMARTCRAWL DEBUG START ===');
+        error_log('Front Page ID: ' . $front_page_id);
+        error_log('API meta_description: ' . $retdata->meta_description);
+        error_log('Sanitized meta_description: ' . $meta_desc);
+        error_log('DB meta_description after update: ' . $written_desc);
+        error_log('=== SMARTCRAWL DEBUG END ===');
     }
 
     // site title and tagline
