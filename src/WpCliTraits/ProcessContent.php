@@ -128,12 +128,31 @@ trait ProcessContent {
     }
 
     // homepage SEO
-    $front_page_id = get_option( 'page_on_front' );
-    if( $front_page_id ) {
-      update_post_meta( $front_page_id, '_wds_title', $retdata->meta_title );
-      update_post_meta( $front_page_id, '_wds_metadesc', $retdata->meta_description );
-      update_post_meta( $front_page_id, '_wds_focus-keywords', $retdata->meta_keyword );
+    $front_page_id = (int) get_option('page_on_front');
+
+    if ($front_page_id) {
+
+        update_post_meta(
+            $front_page_id,
+            '_wds_title',
+            wp_strip_all_tags($retdata->meta_title)
+        );
+
+        // FIXED META DESCRIPTION
+        $meta_desc = wp_strip_all_tags($retdata->meta_description);
+        $meta_desc = preg_replace('/\s+/', ' ', $meta_desc); // remove newlines
+        $meta_desc = mb_substr(trim($meta_desc), 0, 160);    // SmartCrawl limit
+
+        delete_post_meta($front_page_id, '_wds_metadesc');
+        add_post_meta($front_page_id, '_wds_metadesc', $meta_desc, true);
+
+        update_post_meta(
+            $front_page_id,
+            '_wds_focus-keywords',
+            wp_strip_all_tags($retdata->meta_keyword)
+        );
     }
+
 
     // site title and tagline
     update_option('blogname', $retdata->site_name);
