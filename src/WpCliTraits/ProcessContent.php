@@ -128,28 +128,22 @@ trait ProcessContent {
     }
 
     // homepage SEO
-    $front_page_id = get_option( 'page_on_front' );
+    $front_page_id = (int) get_option('page_on_front');
+
     if ($front_page_id) {
-        // sanitize to avoid SmartCrawl silently rejecting it
+
         $meta_title = wp_strip_all_tags($retdata->meta_title);
+
         $meta_desc  = wp_strip_all_tags($retdata->meta_description);
         $meta_desc  = preg_replace('/\s+/', ' ', $meta_desc);
         $meta_desc  = trim($meta_desc);
+        $meta_desc  = mb_substr($meta_desc, 0, 155); // Yoast best practice
 
-        update_post_meta($front_page_id, '_wds_title', $meta_title);
-        update_post_meta($front_page_id, '_wds_metadesc', $meta_desc);
-        update_post_meta($front_page_id, '_wds_focus-keywords', wp_strip_all_tags($retdata->meta_keyword));
-
-        // 🔍 DEBUG: read directly from DB after write
-        $written_desc = get_post_meta($front_page_id, '_wds_metadesc', true);
-
-        error_log('=== SMARTCRAWL DEBUG START ===');
-        error_log('Front Page ID: ' . $front_page_id);
-        error_log('API meta_description: ' . $retdata->meta_description);
-        error_log('Sanitized meta_description: ' . $meta_desc);
-        error_log('DB meta_description after update: ' . $written_desc);
-        error_log('=== SMARTCRAWL DEBUG END ===');
+        update_post_meta($front_page_id, '_yoast_wpseo_title', $meta_title);
+        update_post_meta($front_page_id, '_yoast_wpseo_metadesc', $meta_desc);
+        update_post_meta($front_page_id, '_yoast_wpseo_focuskw', wp_strip_all_tags($retdata->meta_keyword));
     }
+
 
     // site title and tagline
     update_option('blogname', $retdata->site_name);
