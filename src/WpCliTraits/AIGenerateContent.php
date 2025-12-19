@@ -40,20 +40,14 @@ trait AIGenerateContent {
     return 'descriptive paragraph';
   }
 
-  /**
-   * Reusable code to handle content replacement from AI
-   */
   private function ai_content_generate( $apidata, $post ) {
 
     $retdata = $apidata->client;
     $content = $post->post_content;
     $postId  = $post->ID;
 
-    /** ----------------------------
-     * Page Intent Detection
-     * ---------------------------- */
+    /** Page intent */
     $pageIntent = 'general marketing page';
-
     if ( stripos( $post->post_title, 'about' ) !== false ) {
       $pageIntent = 'about page';
     } elseif ( stripos( $post->post_title, 'contact' ) !== false ) {
@@ -62,31 +56,24 @@ trait AIGenerateContent {
       $pageIntent = 'service detail page';
     }
 
-    /** ----------------------------
-     * First Heading Detection
-     * ---------------------------- */
+    /** First heading */
     $firstHeading = null;
-
     preg_match( '/<(h1)\b[^>]*>(.*?)<\/h1>/is', $content, $h1match );
     if ( isset( $h1match[2] ) ) {
       $firstHeading = $h1match[2];
     }
-
     preg_match( '/\b(title|heading)="([^"]*)"/is', $content, $titleMatch );
     if ( ! $firstHeading && isset( $titleMatch[2] ) ) {
       $firstHeading = $titleMatch[2];
     }
 
-    /** ----------------------------
-     * Global Site Context (CRITICAL)
-     * ---------------------------- */
+    /** Global context */
     $siteContext = "
 This content is for a WordPress website page.
 
 Business Name: {$retdata->site_name}
-Tagline: {$retdata->slogan}
 Industries: {$retdata->industries}
-Business Location: {$retdata->site_address}
+Location: {$retdata->site_address}
 
 Page Type: {$pageIntent}
 Page Title: {$post->post_title}
@@ -98,11 +85,8 @@ Rules:
 - Professional, clear, client-ready tone
 ";
 
-    /** ----------------------------
-     * Excluded Words
-     * ---------------------------- */
+    /** Excludes */
     $excludeTemplateWords = $retdata->template->ex_ai_contents ?? [];
-
     $excludeWords = array_merge([
       $retdata->site_name,
       $retdata->slogan,
@@ -115,19 +99,11 @@ Rules:
 
     $matchers = [];
 
-    /** ----------------------------
-     * Paragraphs
-     * ---------------------------- */
+    /** Paragraphs */
     preg_match_all( '/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $paragraphs, PREG_SET_ORDER );
-
     foreach ( $paragraphs as $match ) {
-      if ( ! isset( $match[2] ) ) {
-        continue;
-      }
-
-      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) {
-        continue;
-      }
+      if ( ! isset( $match[2] ) ) continue;
+      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) continue;
 
       $sectionRole = $this->detect_section_role( $match[2], 'p' );
 
@@ -148,21 +124,14 @@ Rules:
       ];
     }
 
-    /** ----------------------------
-     * Headings h2–h6
-     * ---------------------------- */
+    /** Headings (FIXED LENGTH CONTROL) */
     preg_match_all( '/<(h[2-6])\b[^>]*>(.*?)<\/\1>/is', $content, $headings, PREG_SET_ORDER );
-
     foreach ( $headings as $match ) {
-      if ( ! isset( $match[2] ) ) {
-        continue;
-      }
-
-      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) {
-        continue;
-      }
+      if ( ! isset( $match[2] ) ) continue;
+      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) continue;
 
       $sectionRole = $this->detect_section_role( $match[2], $match[1] );
+      $charLimit   = max( 20, mb_strlen( trim( $match[2] ) ) + 10 );
 
       $matchers[] = [
         'instructions' => "
@@ -172,27 +141,22 @@ Original title:
 \"{$match[2]}\"
 
 Rules:
-- Short, clear, and relevant
+- Keep the meaning and intent
 - Do NOT introduce new topics
 - One line only
+- Maximum {$charLimit} characters
 ",
         'content' => $match[2]
       ];
     }
 
-    /** ----------------------------
-     * Title / Heading Attributes
-     * ---------------------------- */
+    /** Title / heading attributes */
     preg_match_all( '/\b(title|heading)="([^"]*)"/is', $content, $attributes, PREG_SET_ORDER );
-
     foreach ( $attributes as $match ) {
-      if ( ! isset( $match[2] ) || $match[2] === 'false' ) {
-        continue;
-      }
+      if ( ! isset( $match[2] ) || $match[2] === 'false' ) continue;
+      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) continue;
 
-      if ( ! $this->allowed_replace( $excludeWords, $match[2] ) ) {
-        continue;
-      }
+      $charLimit = max( 20, mb_strlen( trim( $match[2] ) ) + 10 );
 
       $matchers[] = [
         'instructions' => "
@@ -204,18 +168,15 @@ Original text:
 Rules:
 - Short and relevant
 - One line only
+- Maximum {$charLimit} characters
 ",
         'content' => $match[2]
       ];
     }
 
-    if ( ! count( $matchers ) ) {
-      return;
-    }
+    if ( ! count( $matchers ) ) return;
 
-    /** ----------------------------
-     * SAFE AI LOOP (NO BATCHING)
-     * ---------------------------- */
+    /** Safe AI loop */
     foreach ( $matchers as $matcher ) {
 
       $aiResponse = GeneratorAPI::run(
@@ -237,9 +198,6 @@ Rules:
       }
     }
 
-    /** ----------------------------
-     * Update Post & Clear Divi Cache
-     * ---------------------------- */
     wp_update_post([
       'ID' => $postId,
       'post_content' => $content
@@ -249,15 +207,10 @@ Rules:
     ET_Core_PageResource::do_remove_static_resources( 'all', 'all' );
   }
 
-  /**
-   * WP-CLI command to generate AI content
-   */
   public function generate_ai_content() {
 
     $apidata = $this->appWpTokenGet();
-    if ( ! $apidata ) {
-      return;
-    }
+    if ( ! $apidata ) return;
 
     $posts = get_posts([
       'posts_per_page' => -1,
