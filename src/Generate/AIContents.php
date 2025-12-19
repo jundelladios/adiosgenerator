@@ -3,7 +3,6 @@
 namespace WebGenerator\Generate;
 
 use WebGenerator\RestAPIs\Generate;
-
 use WebGenerator\GeneratorAPI;
 use WebGenerator\GeneratorUtilities;
 use WebGenerator\GeneratorDiviLoader;
@@ -14,7 +13,7 @@ class AIContents extends Generate {
   private $event;
 
   public function __construct() {
-    $this->event = $this->setEvent( "ai_contents" );
+    $this->event = $this->setEvent("ai_contents");
   }
 
   public function getEvent() {
@@ -22,34 +21,36 @@ class AIContents extends Generate {
   }
 
   /**
-    * generate page and post contents from AI
-    * @return void
-    */
+   * generate page and post contents from AI
+   * @return void
+   */
   public function execute() {
-    // Ensure Divi classes are loaded for scheduled actions
     GeneratorDiviLoader::ensure_divi_classes_loaded();
-    
+
     $apidata = $this->get_client();
-    $posts = get_posts(array(
+    $posts = get_posts([
       'posts_per_page' => -1,
-      'post_type' => array(
+      'post_type' => [
         "page",
         "post",
         "project",
         "diva_services",
         "et_footer_layout",
         "et_body_layout"
-      )
-    ));
+      ]
+    ]);
 
-    foreach( $posts as $post ) {
-      $this->ai_content_generate( $apidata, $post);
+    foreach ($posts as $post) {
+      $this->ai_content_generate($apidata, $post);
     }
-    update_option( $this->getEvent(), 1 );
+
+    update_option($this->getEvent(), 1);
   }
 
-  public function allowed_replace( $excludes, $paragraph ) {
-    if( empty( $paragraph )) { return false; }
+  public function allowed_replace($excludes, $paragraph) {
+    if (empty($paragraph)) {
+      return false;
+    }
     foreach ($excludes as $word) {
       if ($paragraph !== null && $word !== null && stripos($paragraph, $word) !== false) {
         return false;
@@ -58,129 +59,227 @@ class AIContents extends Generate {
     return true;
   }
 
+  private function detect_section_role($text, $tag) {
+    if (in_array($tag, ['h1', 'h2', 'h3', 'h4'])) {
+      return 'section heading';
+    }
+    if (strlen(strip_tags($text)) < 70) {
+      return 'supporting text';
+    }
+    if (preg_match('/contact|call|quote|book/i', $text)) {
+      return 'call to action';
+    }
+    return 'descriptive paragraph';
+  }
+
   /**
-  * Reusable code to handle content replacement from AI
-  *
-  * @param mixed $apidata
-  * @param int $post
-  * @return void
-  */
-  public function ai_content_generate( $apidata, $post ) {
+   * Handle AI content replacement
+   *
+   * @param mixed $apidata
+   * @param object $post
+   * @return void
+   */
+  public function ai_content_generate($apidata, $post) {
 
     $retdata = $apidata->client;
     $content = $post->post_content;
-    $postId = $post->ID;
+    $postId  = $post->ID;
 
+    /** ----------------------------
+     * Page Intent Detection
+     * ---------------------------- */
+    $pageIntent = 'general marketing page';
+
+    if (stripos($post->post_title, 'about') !== false) {
+      $pageIntent = 'about page';
+    } elseif (stripos($post->post_title, 'contact') !== false) {
+      $pageIntent = 'contact page';
+    } elseif ($post->post_type === 'diva_services') {
+      $pageIntent = 'service detail page';
+    }
+
+    /** ----------------------------
+     * First Heading Detection
+     * ---------------------------- */
     $firstHeading = null;
 
-    // trying to get first h1 tag
     preg_match('/<(h1)\b[^>]*>(.*?)<\/h1>/is', $content, $h1match);
-    if( isset( $h1match[2] ) && !$firstHeading ) {
+    if (isset($h1match[2])) {
       $firstHeading = $h1match[2];
     }
 
-    // trying to get first title or heading attribute
-    preg_match('/\b(title|heading)="([^"]*)"/is', $content, $titleheadmatch);
-    if( isset( $titleheadmatch[2] ) && !$firstHeading ) {
-      $firstHeading = $titleheadmatch[2];
+    preg_match('/\b(title|heading)="([^"]*)"/is', $content, $titlematch);
+    if (!$firstHeading && isset($titlematch[2])) {
+      $firstHeading = $titlematch[2];
     }
 
+    /** ----------------------------
+     * Global Site Context (CRITICAL)
+     * ---------------------------- */
+    $siteContext = "
+This content is for a WordPress website page.
 
+Business Name: {$retdata->site_name}
+Tagline: {$retdata->slogan}
+Industries: {$retdata->industries}
+Business Location: {$retdata->site_address}
 
-    $excludeTemplateWords = $apidata->client->template->ex_ai_contents;
-    $excludeWords = [
+Page Type: {$pageIntent}
+Page Title: {$post->post_title}
+Primary Heading: {$firstHeading}
+
+Rules:
+- Stay strictly relevant to this page
+- Do NOT introduce unrelated services or industries
+- Professional, clear, client-ready tone
+";
+
+    /** ----------------------------
+     * Excluded Content
+     * ---------------------------- */
+    $excludeTemplateWords = $retdata->template->ex_ai_contents ?? [];
+    $excludeWords = array_merge([
       $retdata->site_name,
       $retdata->slogan,
       $retdata->contact_number,
       $retdata->email_address,
-      str_replace( " ", "+", $retdata->site_address ),
       $retdata->site_address,
       $retdata->insights,
       $firstHeading
-    ];
+    ], $excludeTemplateWords);
 
-    $excludeWords = array_merge( $excludeWords, $excludeTemplateWords );
+    $matchers = [];
 
-    $matchers = array();
+    /** ----------------------------
+     * Paragraphs
+     * ---------------------------- */
+    preg_match_all('/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $paragraphs, PREG_SET_ORDER);
 
-    $appendTitle =" for this page ({$post->post_title})";
+    foreach ($paragraphs as $match) {
+      if (!isset($match[2])) {
+        continue;
+      }
 
-    // for paragraph contents
-    preg_match_all('/<(p)\b[^>]*>(.*?)<\/\1>/is', $content, $matchParagraphs, PREG_SET_ORDER);
-    foreach( $matchParagraphs as $match ) {
-      if( isset( $match[2])) {
-        $countWords = count(explode(" ", $match[2]));
-        // $instruction = $countWords <= 5 ? "- Write a relevant content {$appendTitle} to be replaced for this content: \"{$match[2]}\", it must be related to these industries: {{{industries}}}, with the max word of {$countWords} words.\n" : "- Write a relevant content {$appendTitle} with the max word of {$countWords} words, it must related to these industries: {{{industries}}}. No break or new line, just one-line!\n";
-        $instruction = "- Write a relevant content {$appendTitle}: Replace this content: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}. No break or new line, just one-line! The word length should be the same as the original content.\n";
-        $matchers[] = array(
-          "instructions" => $instruction,
-          "content" => $match[2]
+      if (!$this->allowed_replace($excludeWords, $match[2])) {
+        continue;
+      }
+
+      $sectionRole = $this->detect_section_role($match[2], 'p');
+
+      $matchers[] = [
+        "instructions" => "
+Rewrite this {$sectionRole} for a {$pageIntent}.
+
+Original text:
+\"{$match[2]}\"
+
+Rules:
+- Stay relevant to the page topic
+- Improve clarity and depth
+- Similar length is fine
+- One paragraph only, no line breaks
+",
+        "content" => $match[2]
+      ];
+    }
+
+    /** ----------------------------
+     * Headings h2–h6
+     * ---------------------------- */
+    preg_match_all('/<(h[2-6])\b[^>]*>(.*?)<\/\1>/is', $content, $headings, PREG_SET_ORDER);
+
+    foreach ($headings as $match) {
+      if (!isset($match[2])) {
+        continue;
+      }
+
+      if (!$this->allowed_replace($excludeWords, $match[2])) {
+        continue;
+      }
+
+      $sectionRole = $this->detect_section_role($match[2], $match[1]);
+
+      $matchers[] = [
+        "instructions" => "
+Rewrite this {$sectionRole} for a {$pageIntent}.
+
+Original title:
+\"{$match[2]}\"
+
+Rules:
+- Short, clear, and relevant
+- Do NOT introduce new topics
+- One line only
+",
+        "content" => $match[2]
+      ];
+    }
+
+    /** ----------------------------
+     * Title / Heading Attributes
+     * ---------------------------- */
+    preg_match_all('/\b(title|heading)="([^"]*)"/is', $content, $attributes, PREG_SET_ORDER);
+
+    foreach ($attributes as $match) {
+      if (!isset($match[2]) || $match[2] === 'false') {
+        continue;
+      }
+
+      if (!$this->allowed_replace($excludeWords, $match[2])) {
+        continue;
+      }
+
+      $matchers[] = [
+        "instructions" => "
+Rewrite this UI heading for a {$pageIntent}.
+
+Original text:
+\"{$match[2]}\"
+
+Rules:
+- Keep it short and relevant
+- One line only
+",
+        "content" => $match[2]
+      ];
+    }
+
+    if (!count($matchers)) {
+      return;
+    }
+
+    /** ----------------------------
+     * SAFE AI LOOP (NO BATCHING)
+     * ---------------------------- */
+    foreach ($matchers as $matcher) {
+
+      $aiResponse = GeneratorAPI::run(
+        GeneratorAPI::generatorapi("/api/trpc/openai.askcontent"),
+        [
+          "instructions" => $siteContext . "\n" . $matcher['instructions'],
+          "max" => 1
+        ]
+      );
+
+      $aiData = GeneratorAPI::getResponse($aiResponse);
+
+      if (!empty($aiData->snippets[0])) {
+        $content = str_replace(
+          $matcher['content'],
+          $aiData->snippets[0],
+          $content
         );
       }
     }
 
-    // for heading tags contents
-    preg_match_all('/<(h[2-6])\b[^>]*>(.*?)<\/\1>/is', $content, $matchesHeadings, PREG_SET_ORDER);
-    foreach( $matchesHeadings as $match ) {
-      if( isset( $match[2])) {
-        $countWords = count(explode(" ", $match[2]));
-        $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendTitle}: Replace this title: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}, No break or new line, just one-line! The word length should be the same as the original content.\n",
-          "content" => $match[2]
-        );
-      }
-    }
-
-    // for title heading attributes contents
-    preg_match_all('/\b(title|heading)="([^"]*)"/is', $content, $matchesAttributes, PREG_SET_ORDER);
-    foreach( $matchesAttributes as $match ) {
-      if( isset( $match[2]) && $match[2] !== "false") {
-        $countWords = count(explode(" ", $match[2]));
-        $matchers[] = array(
-          "instructions" => "- Write a relevant title {$appendTitle}: Replace this title: \"{$match[2]}\" and, it must be related to these industries: {{{industries}}}, No break or new line, just one-line! The word length should be the same as the original content.\n",
-          "content" => $match[2]
-        );
-      }
-    }
-
-    if( !count( $matchers )) { 
-      return false; 
-    }
-
-    $finalMatchers = array();
-    foreach( $matchers as $matcher ) {
-      $isAllowedReplacement = $this->allowed_replace( $excludeWords, $matcher['content'] ?? "" );
-      if( $isAllowedReplacement ) {
-        $finalMatchers[] = $matcher;
-      }
-    }
-    
-    $replace_contents = array_column( $finalMatchers, "content" );
-    $instructions = array_column( $finalMatchers, "instructions" );
-    $instructions_text = implode("", $instructions);
-
-    $aiContentsApi = GeneratorAPI::run(
-      GeneratorAPI::generatorapi( "/api/trpc/openai.askcontent" ),
-      array(
-        "instructions" => $instructions_text,
-        "max" => count( $instructions )
-      )
-    );
-
-    $apidata = GeneratorAPI::getResponse( $aiContentsApi );
-    $snippetContents = $apidata->snippets;
-
-    foreach( $replace_contents as $key => $rpcontent ) {
-      if( isset( $snippetContents[$key] ) ) {
-        $content = str_replace( $rpcontent, $snippetContents[$key], $content );
-      }
-    }
-
+    /** ----------------------------
+     * Update Post & Clear Divi Cache
+     * ---------------------------- */
     wp_update_post([
       'ID' => $postId,
       'post_content' => $content
     ]);
 
-    ET_Core_PageResource::do_remove_static_resources( $postId, 'all' );
+    ET_Core_PageResource::do_remove_static_resources($postId, 'all');
   }
 }
