@@ -139,22 +139,10 @@ class StockPhotos extends Generate {
 
     // process images
     if( count( $ret ) ) {
-      $image_instruction =
-      "CRITICAL RULES FOR IMAGE SELECTION:
-      - Replace images ONLY with visually equivalent stock photos.
-      - Preserve the SAME topic, context, and intent as the original image.
-      - Do NOT introduce new concepts, objects, or scenes.
-      - Images must be directly relevant to the page content.
-      - Prefer realistic, professional, website-appropriate photos.
-      - Avoid abstract, artistic, or unrelated visuals.
-      - If unsure, choose a conservative and generic image for the same topic.
-      ";
-
       $aiImagesApi = GeneratorAPI::run(
         GeneratorAPI::generatorapi( "/api/trpc/openai.askstockphotos" ),
         array_merge($stockArgs, array(
-          "number_request" => count( $ret ),
-          "instructions"   => $image_instruction
+          "number_request" => count( $ret )
         ))
       );
 
@@ -233,22 +221,10 @@ class StockPhotos extends Generate {
 
     // process videos if exists
     if( count( $retvids )) {
-      $video_instruction =
-      "CRITICAL RULES FOR VIDEO SELECTION:
-      - Replace videos ONLY with visually equivalent footage.
-      - Preserve the SAME topic, context, and intent as the original video.
-      - Do NOT introduce new scenes, industries, or narratives.
-      - Videos must feel relevant to the surrounding page content.
-      - Prefer professional, calm, website-friendly footage.
-      - Avoid cinematic, dramatic, or unrelated clips.
-      - If unsure, choose a conservative and neutral video.
-      ";
-
       $aiVideosApi = GeneratorAPI::run(
         GeneratorAPI::generatorapi( "/api/trpc/openai.askvideos" ),
         array_merge($stockArgs, array(
-          "number_request" => count( $retvids ),
-          "instructions"   => $video_instruction
+          "number_request" => count( $retvids )
         ))
       );
       
